@@ -1,11 +1,312 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de administración — Noticiero</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/iconfont/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h3> Funciones de admin </h3>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">N</div>
+      <div class="brand-text">Noticiero<span>Panel de administración</span></div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item active"><i class="ti ti-layout-dashboard"></i>Resumen</button>
+      <button class="nav-item"><i class="ti ti-news"></i>Noticias<span class="count">312</span></button>
+      <button class="nav-item"><i class="ti ti-category"></i>Categorías<span class="count">8</span></button>
+      <button class="nav-item"><i class="ti ti-users"></i>Autores<span class="count">6</span></button>
+      <button class="nav-item"><i class="ti ti-message-circle"></i>Comentarios<span class="count">47</span></button>
+      <div class="nav-label">Analítica</div>
+      <button class="nav-item"><i class="ti ti-chart-line"></i>Tráfico del sitio</button>
+      <button class="nav-item"><i class="ti ti-eye"></i>Lectores en vivo</button>
+      <div class="nav-label">Sistema</div>
+      <button class="nav-item"><i class="ti ti-settings"></i>Configuración</button>
+      <button class="nav-item"><i class="ti ti-help-circle"></i>Ayuda</button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="avatar">CM</div>
+      <div class="avatar-info">
+        <p>Carlos M.</p>
+        <span>Editor en jefe</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Resumen del sitio</h1>
+        <div class="sub">Jueves, 3 de septiembre de 2026</div>
+      </div>
+      <div class="topbar-right">
+        <div class="search">
+          <i class="ti ti-search"></i>
+          <input type="text" placeholder="Buscar noticias, autores...">
+        </div>
+        <button class="btn-new"><i class="ti ti-plus"></i>Nueva noticia</button>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi hero">
+        <div>
+          <div class="kpi-num">8,942</div>
+          <div class="kpi-label">Visitantes hoy</div>
+          <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>12% vs. ayer</div>
+        </div>
+        <div class="kpi-icon"><i class="ti ti-users"></i></div>
+      </div>
+      <div class="kpi">
+        <div>
+          <div class="kpi-num">312</div>
+          <div class="kpi-label">Noticias publicadas</div>
+          <div class="kpi-delta up"><i class="ti ti-arrow-up-right"></i>5 esta semana</div>
+        </div>
+        <div class="kpi-icon"><i class="ti ti-news"></i></div>
+      </div>
+      <div class="kpi">
+        <div>
+          <div class="kpi-num">6</div>
+          <div class="kpi-label">Autores activos</div>
+        </div>
+        <div class="kpi-icon"><i class="ti ti-users"></i></div>
+      </div>
+      <div class="kpi">
+        <div>
+          <div class="kpi-num">47</div>
+          <div class="kpi-label">Comentarios pendientes</div>
+        </div>
+        <div class="kpi-icon"><i class="ti ti-message-circle"></i></div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Visitas (últimos 12 meses)</h2>
+          <div class="legend-dot"><span></span>Visitantes</div>
+        </div>
+        <div style="position:relative; height:230px; margin-top:8px;">
+          <canvas id="visitsChart" role="img" aria-label="Gráfico de línea de visitantes mensuales al sitio durante los últimos 12 meses">Visitantes por mes, de septiembre 2025 a agosto 2026, con un pico en diciembre y julio.</canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Lectores por sección</h2>
+        </div>
+        <div style="position:relative; height:170px; margin-top:10px;">
+          <canvas id="sectionsChart" role="img" aria-label="Gráfico de dona mostrando la distribución de lectores por sección del sitio">Béisbol 44%, Fútbol 26%, Boxeo 16%, Otros deportes 14%.</canvas>
+        </div>
+        <div class="donut-legend">
+          <div class="row"><span class="sw" style="background:#E14B3E"></span>Béisbol<span class="val">44%</span></div>
+          <div class="row"><span class="sw" style="background:#4C8CE0"></span>Fútbol<span class="val">26%</span></div>
+          <div class="row"><span class="sw" style="background:#E0A63C"></span>Boxeo<span class="val">16%</span></div>
+          <div class="row"><span class="sw" style="background:#8B6ED8"></span>Otros deportes<span class="val">14%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel table-panel">
+      <div class="table-head">
+        <h2>Noticias recientes</h2>
+        <div class="table-tabs">
+          <button class="tab active">Todas</button>
+          <button class="tab">Publicadas</button>
+          <button class="tab">Borradores</button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Titular</th>
+            <th>Autor</th>
+            <th>Estado</th>
+            <th class="col-right">Vistas</th>
+            <th>Publicado</th>
+            <th class="col-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="article-title">Los Tigres del Licey aseguran su lugar en la final del Caribe</span>
+              <div class="article-cat">Béisbol</div>
+            </td>
+            <td>R. Peña</td>
+            <td><span class="badge live"><i class="ti ti-point-filled"></i>En vivo</span></td>
+            <td class="col-right views-cell">14,203</td>
+            <td>Hoy, 9:12 am</td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn" aria-label="Editar"><i class="ti ti-edit"></i></button>
+                <button class="icon-btn" aria-label="Ver"><i class="ti ti-eye"></i></button>
+                <button class="icon-btn danger" aria-label="Eliminar"><i class="ti ti-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="article-title">Real Madrid golea 4-0 y se acerca a la cima de La Liga</span>
+              <div class="article-cat">Fútbol</div>
+            </td>
+            <td>M. Fernández</td>
+            <td><span class="badge published"><i class="ti ti-point-filled"></i>Publicado</span></td>
+            <td class="col-right views-cell">9,847</td>
+            <td>Ayer, 6:40 pm</td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn" aria-label="Editar"><i class="ti ti-edit"></i></button>
+                <button class="icon-btn" aria-label="Ver"><i class="ti ti-eye"></i></button>
+                <button class="icon-btn danger" aria-label="Eliminar"><i class="ti ti-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="article-title">Canelo Álvarez confirma fecha para su próxima defensa de título</span>
+              <div class="article-cat">Boxeo</div>
+            </td>
+            <td>J. Ortiz</td>
+            <td><span class="badge draft"><i class="ti ti-point-filled"></i>Borrador</span></td>
+            <td class="col-right views-cell">—</td>
+            <td>Sin publicar</td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn" aria-label="Editar"><i class="ti ti-edit"></i></button>
+                <button class="icon-btn" aria-label="Ver"><i class="ti ti-eye"></i></button>
+                <button class="icon-btn danger" aria-label="Eliminar"><i class="ti ti-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="article-title">Selección dominicana anuncia roster preliminar para el Clásico Mundial</span>
+              <div class="article-cat">Béisbol</div>
+            </td>
+            <td>R. Peña</td>
+            <td><span class="badge published"><i class="ti ti-point-filled"></i>Publicado</span></td>
+            <td class="col-right views-cell">21,510</td>
+            <td>2 días</td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn" aria-label="Editar"><i class="ti ti-edit"></i></button>
+                <button class="icon-btn" aria-label="Ver"><i class="ti ti-eye"></i></button>
+                <button class="icon-btn danger" aria-label="Eliminar"><i class="ti ti-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="article-title">Alcaraz avanza a semifinales tras triunfo en cinco sets</span>
+              <div class="article-cat">Otros deportes</div>
+            </td>
+            <td>M. Fernández</td>
+            <td><span class="badge draft"><i class="ti ti-point-filled"></i>Borrador</span></td>
+            <td class="col-right views-cell">—</td>
+            <td>Sin publicar</td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn" aria-label="Editar"><i class="ti ti-edit"></i></button>
+                <button class="icon-btn" aria-label="Ver"><i class="ti ti-eye"></i></button>
+                <button class="icon-btn danger" aria-label="Eliminar"><i class="ti ti-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  const months = ['Sep','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago'];
+  const visits = [4200, 4650, 5100, 8900, 5300, 4800, 6100, 6700, 6200, 5400, 8942, 9600];
+
+  new Chart(document.getElementById('visitsChart'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        data: visits,
+        borderColor: '#E14B3E',
+        backgroundColor: 'rgba(225,75,62,0.08)',
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#E14B3E',
+        pointHoverBorderColor: '#1B1C21',
+        pointHoverBorderWidth: 2,
+        fill: true,
+        tension: 0.35
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: '#202126',
+        borderColor: '#2B2D34',
+        borderWidth: 1,
+        titleColor: '#F1F1EE',
+        bodyColor: '#9A9CA6',
+        padding: 10,
+        displayColors: false,
+        callbacks: { label: (ctx) => ctx.parsed.y.toLocaleString('es-DO') + ' visitantes' }
+      }},
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#6A6C77', font: { size: 11 } } },
+        y: {
+          grid: { color: '#232429' },
+          border: { display: false },
+          ticks: { color: '#6A6C77', font: { size: 11 }, callback: (v) => (v/1000) + 'k' }
+        }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('sectionsChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Béisbol','Fútbol','Boxeo','Otros deportes'],
+      datasets: [{
+        data: [44, 26, 16, 14],
+        backgroundColor: ['#E14B3E','#4C8CE0','#E0A63C','#8B6ED8'],
+        borderColor: '#1B1C21',
+        borderWidth: 3,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#202126',
+          borderColor: '#2B2D34',
+          borderWidth: 1,
+          titleColor: '#F1F1EE',
+          bodyColor: '#9A9CA6',
+          padding: 10,
+          displayColors: false,
+          callbacks: { label: (ctx) => ctx.label + ': ' + ctx.parsed + '%' }
+        }
+      }
+    }
+  });
+</script>
 </body>
 </html>
