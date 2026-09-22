@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Latinos en Pelota</title>
+<style>
+  :root{
+    --navy:#0f1a2e;
+    --navy2:#13213a;
+    --text:#1a2333;
+    --muted:#6b7688;
+    --line:#e7e9ee;
+    --bg:#f5f6f8;
+    --yellow:#f2c14e;
+    --red:#d64545;
+    --blue:#3d7fc7;
+    --green:#3f8f5f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  a{color:inherit;text-decoration:none;}
+  img{display:block;width:100%;height:100%;object-fit:cover;}
+
+  header.site{
+    background:var(--navy);
+    color:#fff;
+    padding:22px 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .logo{
+    width:52px;height:52px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #2a4a7f, #0b1526 75%);
+    border:2px solid var(--yellow);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:10px;letter-spacing:.5px;color:var(--yellow);
+    text-align:center;line-height:1.1;
+  }
+  .brand h1{margin:0;font-size:22px;font-weight:700;}
+  .brand p{margin:2px 0 0;font-size:13px;color:#9fb0c9;}
+  .date{color:#9fb0c9;font-size:14px;white-space:nowrap;}
+
+  nav.tabs{
+    background:var(--navy2);
+    display:flex;gap:28px;
+    padding:0 32px;
+    overflow-x:auto;
+  }
+  nav.tabs a{
+    color:#c3cede;font-size:14px;font-weight:600;
+    padding:16px 2px;border-bottom:3px solid transparent;
+    white-space:nowrap;
+  }
+  nav.tabs a.active{color:#fff;border-color:var(--red);}
+
+  main{
+    max-width:1200px;margin:0 auto;
+    padding:28px 32px 60px;
+    display:grid;
+    grid-template-columns:1fr 300px;
+    gap:28px;
+  }
+  @media (max-width:880px){
+    main{grid-template-columns:1fr;}
+  }
+
+  .hero{
+    grid-column:1;
+    background:var(--navy);
+    border-radius:6px;
+    overflow:hidden;
+    color:#fff;
+  }
+  .hero .media{aspect-ratio:16/8;background:#000;}
+  .hero .body{padding:26px;}
+  .tag{
+    display:inline-block;font-size:12px;font-weight:800;
+    padding:5px 10px;border-radius:3px;margin-bottom:14px;
+    color:#101010;
+  }
+  .tag.futbol{background:var(--yellow);}
+  .tag.futbol-red{background:var(--red);color:#fff;}
+  .tag.baloncesto{background:var(--blue);color:#fff;}
+  .tag.atletismo{background:var(--green);color:#fff;}
+
+  .hero h2{margin:0 0 14px;font-size:28px;line-height:1.25;font-weight:700;}
+  .hero p{margin:0 0 16px;color:#c3cede;font-size:15px;line-height:1.5;max-width:60ch;}
+  .byline{color:#8394ab;font-size:13px;}
+
+  .sidebar{grid-column:2;display:flex;flex-direction:column;gap:20px;}
+  @media (max-width:880px){.sidebar{grid-column:1;}}
+
+  .ad-card{
+    background:#fff;border:1px solid var(--line);border-radius:6px;
+    overflow:hidden;
+  }
+  .ad-card .media{aspect-ratio:16/10;}
+  .ad-card .body{padding:16px;}
+  .ad-label{font-size:11px;letter-spacing:.4px;color:var(--muted);font-weight:700;margin-bottom:8px;}
+  .ad-card h3{margin:0 0 6px;font-size:16px;}
+  .ad-card p{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.5;}
+  .btn{
+    display:inline-block;background:#2c6e4f;color:#fff;font-size:13px;font-weight:700;
+    padding:9px 16px;border-radius:4px;
+  }
+  .btn.dark{background:var(--navy);}
+
+  .grid{
+    grid-column:1/-1;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+    margin-top:8px;
+  }
+  @media (max-width:880px){.grid{grid-template-columns:1fr 1fr;}}
+  @media (max-width:560px){.grid{grid-template-columns:1fr;}}
+
+  article.story{display:flex;flex-direction:column;}
+  article.story .media{aspect-ratio:4/3;border-radius:4px;overflow:hidden;background:#dde1e7;}
+  article.story .tag{margin-top:14px;}
+  article.story h3{margin:0 0 8px;font-size:17px;line-height:1.3;}
+  article.story p{margin:0 0 10px;font-size:14px;color:var(--muted);line-height:1.5;}
+  article.story .byline{color:var(--muted);}
+
+  footer{
+    background:var(--navy);color:#8394ab;text-align:center;
+    padding:26px 20px;font-size:13px;
+  }
+  footer a{color:#c3cede;text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="brand">
+    <div class="logo"><img src="assets/Logo latinos .png"></div>
+    <div>
+      <h1>Latinos en Pelota</h1>
+      <p>El deporte latino, a otro nivel</p>
+    </div>
+  </div>
+  <div class="date">sábado, 29 de agosto de 2026</div>
+</header>
+
+<nav class="tabs">
+  <a href="#" class="active">Todas</a>
+  <a href="#">Béisbol</a>
+  <a href="#">Fútbol</a>
+  <a href="#">Baloncesto</a>
+  <a href="#">Atletismo</a>
+</nav>
+
+<main>
+
+  <article class="hero">
+    <div class="media">
+      <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Etihad%20Stadium.jpg" alt="Estadio lleno durante un partido de fútbol">
+    </div>
+    <div class="body">
+      <span class="tag futbol">FÚTBOL</span>
+      <h2>La final del torneo continental se decide en los penaltis tras un partido vibrante</h2>
+      <p>El equipo visitante remontó dos goles en la segunda mitad antes de imponerse en la tanda desde los once metros, ante un estadio completamente entregado.</p>
+      <div class="byline">Redacción · 28 ago 2026</div>
+    </div>
+  </article>
+
+  <aside class="sidebar">
+    <div class="ad-card">
+      <div class="media">
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Basketball%20pic.png" alt="Balón de baloncesto">
+      </div>
+      <div class="body">
+        <div class="ad-label">PUBLICIDAD</div>
+        <div class="ad-label" style="color:#8a93a3;font-weight:600;">ANUNCIO</div>
+        <h3>Apuestas deportivas</h3>
+        <p>Compara cuotas y promociones de bienvenida antes de apostar con dinero real.</p>
+        <span class="btn">Ver oferta</span>
+      </div>
+    </div>
+
+    <div class="ad-card">
+      <div class="media">
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/London%202012%20Olympic%20100m%20final%20start.jpg" alt="Salida de una carrera de pista">
+      </div>
+      <div class="body">
+        <div class="ad-label">PUBLICIDAD</div>
+        <h3>Nueva colección otoño 2026</h3>
+        <p>Prendas técnicas pensadas para entrenar en cualquier estación.</p>
+        <span class="btn dark">Comprar ahora →</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="grid">
+
+    <article class="story">
+      <div class="media">
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/RoseGardenArenaInterior3.jpg" alt="Interior de un pabellón de baloncesto">
+      </div>
+      <span class="tag baloncesto">BALONCESTO</span>
+      <h3>Un equipo de la NBA cierra el fichaje estrella del verano con un base europeo</h3>
+      <p>La franquicia refuerza su plantilla de cara a la nueva temporada con un contrato de varios años.</p>
+      <div class="byline">Redacción · 27 ago 2026</div>
+    </article>
+
+    <article class="story">
+      <div class="media">
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Haiti%20national%20football%20team%20training%20in%20Port-au-Prince%202004-08-16%202.jpg" alt="Selección nacional entrenando">
+      </div>
+      <span class="tag futbol-red">FÚTBOL</span>
+      <h3>La selección convoca a tres debutantes para los próximos partidos de la Liga de Naciones</h3>
+      <p>El seleccionador apuesta por la juventud e incorpora tres nombres nuevos a la lista.</p>
+      <div class="byline">Redacción · 23 ago 2026</div>
+    </article>
+
+    <article class="story">
+      <div class="media">
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/London%202012%20Olympic%20100m%20final%20start.jpg" alt="Salida de una carrera de 100 metros">
+      </div>
+      <span class="tag atletismo">ATLETISMO</span>
+      <h3>Se rompe el récord mundial de los 100 metros lisos en el campeonato continental</h3>
+      <p>El velocista superó la marca que resistía desde hacía más de una década.</p>
+      <div class="byline">Redacción · 25 ago 2026</div>
+    </article>
+
+    <article class="story">
+      <div class="media">
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/USMC%20Marathon.jpg" alt="Corredores de maratón en carretera">
+      </div>
+      <span class="tag atletismo">ATLETISMO</span>
+      <h3>Una maratonista bate el récord nacional en una de las grandes citas del calendario</h3>
+      <p>Con un tiempo por debajo de las dos horas y veinte minutos, se convierte en la más rápida de su país.</p>
+      <div class="byline">Redacción · 24 ago 2026</div>
+    </article>
+
+    <article class="story">
+      <div class="media">
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Basketball%20pic.png" alt="Balón de baloncesto en cancha">
+      </div>
+      <span class="tag baloncesto">BALONCESTO</span>
+      <h3>La selección nacional cae en semifinales del torneo continental ante un rival intratable</h3>
+      <p>El equipo no pudo con el físico y la intensidad del rival en una noche de altibajos.</p>
+      <div class="byline">Redacción · 21 ago 2026</div>
+    </article>
+
+  </div>
+
+</main>
+
+<footer>
+  © 2026 Portal deportivo · Todos los derechos reservados<br>
+  <a href="#">Política de privacidad</a> · <a href="#">Cookies</a>
+</footer>
+
+</body>
+</html>
