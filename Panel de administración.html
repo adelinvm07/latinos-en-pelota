@@ -417,7 +417,7 @@
         </div>
         <div class="topbar-actions">
           <input class="search-input" id="searchInput" type="text" placeholder="Buscar noticias, autores...">
-          <button class="btn btn-primary" id="primaryAction">Nueva noticia</button>
+          <a href="crear-noticia.html" class="btn btn-primary" id="addNews" style="text-decoration: none"> Nueva noticia </a>
         </div>
       </div>
 
@@ -951,33 +951,6 @@
     } else if (reId) {
       var item2 = comentarios.find(function (x) { return x.id === Number(reId); });
       if (item2) { item2.estado = "rechazado"; state.comentariosPendientesTotal = Math.max(0, state.comentariosPendientesTotal - 1); renderComentarios(); updateNavBadges(); }
-    }
-  });
-
-  /* ---------- Primary action button ---------- */
-  document.getElementById("primaryAction").addEventListener("click", function () {
-    if (state.section === "resumen") { setSection("noticias"); return; }
-    if (state.section === "noticias") {
-      var titulo = prompt("Título de la nueva noticia:");
-      if (titulo && titulo.trim()) {
-        var hoy = new Date().toISOString().slice(0, 10);
-        noticias.unshift({ id: nextNoticiaId++, titulo: titulo.trim(), categoria: categorias[0].nombre, autor: autores[0].nombre, estado: "Borrador", vistas: 0, fecha: hoy });
-        state.noticiasTotal++; state.noticiasPage = 1; renderNoticias(); updateNavBadges();
-      }
-    } else if (state.section === "categorias") {
-      var nombre = prompt("Nombre de la nueva categoría:");
-      if (nombre && nombre.trim()) {
-        categorias.push({ id: nextCatId++, nombre: nombre.trim(), count: 0, color: avatarPalette[categorias.length % avatarPalette.length] });
-        renderCategorias(); updateNavBadges(); populateCategoriaFilter();
-      }
-    } else if (state.section === "autores") {
-      var nombreA = prompt("Nombre del nuevo autor:");
-      if (nombreA && nombreA.trim()) {
-        var mesesA = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-        var hoyA = new Date();
-        autores.push({ id: nextAutorId++, nombre: nombreA.trim(), rol: "Redactor", articulos: 0, desde: mesesA[hoyA.getMonth()] + " " + hoyA.getFullYear() });
-        renderAutores(); updateNavBadges();
-      }
     }
   });
 

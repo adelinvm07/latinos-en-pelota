@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nueva noticia — Panel de administración</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+</head>
+<body>
+<div class="app">
+  <main class="main" style="width:100%;">
+    <div class="content" style="max-width:800px; margin: 0 auto;">
+      <div class="topbar" style="margin-bottom: 24px;">
+        <div class="topbar-titles">
+          <h1>Nueva noticia</h1>
+          <p>Crea y publica contenido para el portal</p>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="padding: 24px;">
+        <form id="form-noticia">
+          <div class="campo" style="margin-bottom: 16px;">
+            <label for="titulo" style="display:block; margin-bottom:6px; font-weight:600;">Título</label>
+            <input type="text" id="titulo" class="search-input" style="width:100%;" required>
+          </div>
+
+          <div class="campo" style="margin-bottom: 16px;">
+            <label for="subtitulo" style="display:block; margin-bottom:6px; font-weight:600;">Subtítulo</label>
+            <input type="text" id="subtitulo" class="search-input" style="width:100%;" required>
+          </div>
+
+          <div class="campo" style="margin-bottom: 16px;">
+            <label for="categoria" style="display:block; margin-bottom:6px; font-weight:600;">Categoría</label>
+            <select id="categoria" class="search-input" style="width:100%;" required>
+              <option value="" disabled selected>Cargando categorías...</option>
+            </select>
+          </div>
+
+          <div class="campo" style="margin-bottom: 16px;">
+            <label for="imagen" style="display:block; margin-bottom:6px; font-weight:600;">Imagen de portada</label>
+            <input type="file" id="imagen" accept="image/*" style="display:block; margin-bottom:8px;">
+            <img id="preview-imagen" class="preview-imagen" style="max-width:200px; border-radius:8px; display:block;">
+          </div>
+
+          <div class="campo" style="margin-bottom: 24px;">
+            <label for="editor-contenido" style="display:block; margin-bottom:6px; font-weight:600;">Contenido</label>
+            <div id="editor-contenido" style="height: 250px; background: var(--bg); color: var(--text);"></div>
+          </div>
+
+          <div class="botones" style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" class="btn btn-ghost" id="btn-cancelar">Cancelar</button>
+            <button type="button" class="btn btn-ghost" id="btn-borrador">Guardar borrador</button>
+            <button type="button" class="btn btn-primary" id="btn-publicar">Publicar</button>
+          </div>
+
+          <p id="mensaje" style="margin-top: 14px; font-weight:600; text-align:right;"></p>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script src="crear-noticia.html"></script>
+</body>
+</html>
