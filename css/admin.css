@@ -7,18 +7,18 @@
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 
-  --accent: #E75B47;
-  --accent-dark: #C8452F;
-  --accent-soft: rgba(231, 91, 71, 0.08);
-  --accent-glow: rgba(231, 91, 71, 0.25);
+  --accent:#0f1c30;
+  --accent-dark: #0a1422;
+  --accent-soft: rgba(15, 28, 48, 0.08);
+  --accent-glow: rgba(15, 28, 48, 0.25);
   --accent-ink: #FFFFFF;
 
   --success: #16A34A;
   --success-soft: rgba(22, 163, 74, 0.1);
   --danger: #DC2626;
   --danger-soft: rgba(220, 38, 38, 0.1);
-  --warning: #D97706;
-  --warning-soft: rgba(217, 119, 6, 0.1);
+  --warning: #f2c230;
+  --warning-soft: rgba(242, 194, 48, 0.1);
 
   --bg: #F4F6F9; /* Fondo claro de la página */
   --surface: #FFFFFF; /* Paneles, tarjetas y modales en blanco */
@@ -31,8 +31,8 @@
   --badge-bg: #EEF2F6;
   --badge-text: #475569;
 
-  --blue: #2563EB;
-  --gold: #D97706;
+  --blue: #3f8fd6;
+  --gold: #f2c230;
   --purple: #7C3AED;
   --teal: #0D9488;
   --pink: #DB2777;
@@ -905,4 +905,16 @@ button, input, select, textarea { font-family: inherit; }
   font-size: 13.5px;
   color: var(--text-muted);
   margin-bottom: 24px;
+}
+
+/* Logo de la pagina */
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  background: url('../assets/Logo\ latinos\ .png') center / contain no-repeat;
+  flex-shrink: 0;
+  text-indent: -9999px;
+  overflow: hidden;
+  box-shadow: none;
 }
