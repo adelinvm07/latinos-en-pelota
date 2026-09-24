@@ -24,8 +24,8 @@
   --surface: #FFFFFF; /* Paneles, tarjetas y modales en blanco */
   --surface-hover: #F8FAFC;
   --surface-card: #FFFFFF;
-  --text: #0F172A; /* Texto oscuro de alta legibilidad */
-  --text-muted: #0F172A;
+  --text: #071128; /* Texto oscuro de alta legibilidad */
+  --text-muted: #3b4e76;
   --border: #E2E8F0;
   --border-focus: #CBD5E1;
   --badge-bg: #EEF2F6;
