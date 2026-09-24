@@ -168,10 +168,6 @@
       <span>Categorías</span>
       <span class="nav-badge" id="badgeCategorias">0</span>
     </button>
-    <button class="nav-item" data-section="autores">
-      <span>Autores</span>
-      <span class="nav-badge" id="badgeAutores">6</span>
-    </button>
     <button class="nav-item" data-section="comentarios">
       <span>Comentarios</span>
       <span class="nav-badge" id="badgeComentarios">4</span>
@@ -214,7 +210,7 @@
           <p id="pageSubtitle">Panel de control general</p>
         </div>
         <div class="topbar-actions">
-          <input class="search-input" id="searchInput" type="text" placeholder="Buscar noticias, autores...">
+          <input class="search-input" id="searchInput" type="text" placeholder="Buscar noticias...">
           <a href="crear-noticia.html" class="btn btn-primary" id="primaryAction">+ Nueva noticia</a>
         </div>
       </div>
@@ -231,10 +227,6 @@
             <div class="stat-num" id="statNoticias">0</div>
             <div class="stat-label">Noticias en Supabase</div>
             <div class="stat-sub stat-sub--success">Sincronizado</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-num" id="statAutores">6</div>
-            <div class="stat-label">Autores activos</div>
           </div>
           <div class="stat-card">
             <div class="stat-num" id="statComentarios">4</div>
@@ -296,7 +288,6 @@
               <thead><tr>
                 <th>Título</th>
                 <th>Categoría</th>
-                <th>Autor</th>
                 <th>Estado</th>
                 <th>Vistas</th>
                 <th>Fecha</th>
@@ -335,11 +326,6 @@
             <p>Conectando con Supabase...</p>
           </div>
         </div>
-      </section>
-
-      <!-- ==================== SECCIÓN: AUTORES ==================== -->
-      <section class="section" data-view="autores">
-        <div class="card-grid" id="autoresGrid"></div>
       </section>
 
       <!-- ==================== SECCIÓN: COMENTARIOS ==================== -->
