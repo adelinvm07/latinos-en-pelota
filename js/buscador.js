@@ -190,3 +190,28 @@
   });
 
 })();
+
+function actualizarFechaHoy() {
+  var fechaElemento = document.getElementById("fecha-hoy");
+  if (!fechaElemento) return;
+
+  var hoy = new Date();
+
+  // Formatear la fecha en español (Ejemplo: "jueves, 24 de septiembre de 2026")
+  var opciones = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  };
+  
+  var fechaFormateada = hoy.toLocaleDateString('es-ES', opciones);
+
+  // Colocar en mayúscula la primera letra del día de la semana
+  fechaElemento.textContent = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+}
+
+// Llamar a la función cuando el documento esté listo
+document.addEventListener("DOMContentLoaded", function () {
+  actualizarFechaHoy();
+});
