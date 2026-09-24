@@ -531,8 +531,8 @@
 
         return "<tr>" +
           '<td class="title-cell">' +
-          '<div style="font-weight:600;color:#fff;">' + escapeHtml(item.titulo) + '</div>' +
-          (item.subtitulo ? '<div style="font-size:12px;color:var(--text-muted);margin-top:2px;">' + escapeHtml(item.subtitulo) + '</div>' : '') +
+  '<div style="font-weight:700;color:var(--text);font-size:14px;">' + escapeHtml(item.titulo) + '</div>' +
+  (item.subtitulo ? '<div style="font-size:12.5px;color:var(--text-muted);margin-top:3px;line-height:1.3;">' + escapeHtml(item.subtitulo) + '</div>' : '') +
           '</td>' +
           '<td><span class="pill pill--accent">' + escapeHtml(item.categoria) + '</span></td>' +
           '<td>Redacción</td>' +
