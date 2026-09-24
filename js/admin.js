@@ -259,8 +259,8 @@
       updateNavBadges();
       renderResumenStats();
     } catch (err) {
-      console.error("Error al cargar categorías de Supabase:", err);
-      showToast("Error de Supabase", err.message || "No se pudieron cargar las categorías.", "error");
+      console.error("Error al cargar categorías:", err);
+      showToast("Error ", err.message || "No se pudieron cargar las categorías.", "error");
     }
   }
 
@@ -297,7 +297,7 @@
       updateNavBadges();
       renderResumenStats();
     } catch (err) {
-      console.error("Error al cargar noticias de Supabase:", err);
+      console.error("Error al cargar noticias:", err);
     }
   }
 
@@ -694,7 +694,7 @@
 
   var sectionMeta = {
     resumen: { title: "Resumen del sitio", subtitle: "Panel de control general", search: "Buscar noticias, autores...", action: "Nueva noticia" },
-    noticias: { title: "Gestión de Noticias", subtitle: "Publicaciones en base de datos Supabase", search: "Buscar noticia por título...", action: "Nueva noticia" },
+    noticias: { title: "Gestión de Noticias", subtitle: "Publicaciones", search: "Buscar noticia por título...", action: "Nueva noticia" },
     categorias: { title: "Gestión de Categorías", subtitle: "Organiza las secciones deportivas", search: "Buscar categoría...", action: "Nueva categoría" },
     autores: { title: "Equipo Editorial", subtitle: "Autores y redactores", search: "Buscar autor...", action: null },
     comentarios: { title: "Comentarios", subtitle: "Moderación de comentarios", search: "Buscar comentario...", action: null },
@@ -880,7 +880,7 @@
       setSection(params.get("seccion"));
     }
     if (params.get("creada") === "1") {
-      showToast("¡Excelente!", "La noticia ha sido registrada en Supabase.", "success");
+      showToast("¡Excelente!", "La noticia ha sido registrada correctamente.", "success");
     }
   });
 
