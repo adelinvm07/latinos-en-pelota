@@ -37,16 +37,6 @@
     "#2ecc71"
   ];
 
-  // Datos mock para secciones estáticas (Autores, Comentarios)
-  var autores = [
-    { id: 1, nombre: "Yolanda Payano", rol: "Editora de Béisbol", articulos: 74, desde: "ene 2023" },
-    { id: 2, nombre: "Rafael Contreras", rol: "Editor de Fútbol", articulos: 58, desde: "mar 2023" },
-    { id: 3, nombre: "Manuel Disla", rol: "Boxeo y Baloncesto", articulos: 65, desde: "ago 2023" },
-    { id: 4, nombre: "Ana Beatriz Reyes", rol: "Sección Nacional", articulos: 41, desde: "jun 2024" },
-    { id: 5, nombre: "Diego Santana", rol: "Internacional y Economía", articulos: 47, desde: "feb 2025" },
-    { id: 6, nombre: "Camila Vásquez", rol: "Entretenimiento", articulos: 27, desde: "oct 2025" }
-  ];
-
   var comentarios = [
     { id: 1, autor: "Ramón Féliz", texto: "¡Por fin una temporada donde el Licey juega en serio! Ese noveno inning fue una locura.", articulo: "El Escogido remonta en el noveno", fecha: "2026-09-03", estado: "pendiente" },
     { id: 2, autor: "Carmen Ozuna", texto: "¿Alguien sabe si van a transmitir el partido por streaming también?", articulo: "República Dominicana estrena su roster preliminar", fecha: "2026-09-03", estado: "pendiente" },
@@ -259,8 +249,8 @@
       updateNavBadges();
       renderResumenStats();
     } catch (err) {
-      console.error("Error al cargar categorías de Supabase:", err);
-      showToast("Error de Supabase", err.message || "No se pudieron cargar las categorías.", "error");
+      console.error("Error al cargar categorías:", err);
+      showToast("Error ", err.message || "No se pudieron cargar las categorías.", "error");
     }
   }
 
@@ -297,7 +287,7 @@
       updateNavBadges();
       renderResumenStats();
     } catch (err) {
-      console.error("Error al cargar noticias de Supabase:", err);
+      console.error("Error al cargar noticias:", err);
     }
   }
 
@@ -443,11 +433,9 @@
   // =========================================================================
   function renderResumenStats() {
     var statNoticias = document.getElementById("statNoticias");
-    var statAutores = document.getElementById("statAutores");
     var statComentarios = document.getElementById("statComentarios");
 
     if (statNoticias) statNoticias.textContent = fmt(state.noticiasTotal);
-    if (statAutores) statAutores.textContent = fmt(autores.length);
     if (statComentarios) statComentarios.textContent = fmt(state.comentariosPendientesTotal);
   }
 
@@ -625,29 +613,8 @@
   }
 
   // =========================================================================
-  // RENDER: AUTORES & COMENTARIOS
+  // RENDER: COMENTARIOS
   // =========================================================================
-  function renderAutores() {
-    var grid = document.getElementById("autoresGrid");
-    if (!grid) return;
-    grid.innerHTML = autores.map(function (a, idx) {
-      var color = catPalette[idx % catPalette.length];
-      var init = a.nombre.split(" ").map(function (p) { return p[0]; }).join("").toUpperCase().slice(0, 2);
-      return (
-        '<div class="author-card" style="border-top-color:' + color + '">' +
-        '<div class="author-top">' +
-        '<div class="avatar" style="background:' + color + ';color:#fff;">' + init + '</div>' +
-        '<div><div class="author-name">' + escapeHtml(a.nombre) + '</div><div class="author-role">' + escapeHtml(a.rol) + '</div></div>' +
-        '</div>' +
-        '<div class="author-stats">' +
-        '<div class="author-stat"><b>' + fmt(a.articulos) + '</b><span>Artículos</span></div>' +
-        '<div class="author-stat"><b>' + a.desde + '</b><span>En el equipo</span></div>' +
-        '</div>' +
-        '</div>'
-      );
-    }).join("");
-  }
-
   function renderComentarios() {
     var list = document.getElementById("comentariosList");
     if (!list) return;
@@ -683,20 +650,17 @@
   function updateNavBadges() {
     var bNoti = document.getElementById("badgeNoticias");
     var bCat = document.getElementById("badgeCategorias");
-    var bAut = document.getElementById("badgeAutores");
     var bCom = document.getElementById("badgeComentarios");
 
     if (bNoti) bNoti.textContent = fmt(state.noticiasTotal);
     if (bCat) bCat.textContent = fmt(categorias.length);
-    if (bAut) bAut.textContent = fmt(autores.length);
     if (bCom) bCom.textContent = fmt(state.comentariosPendientesTotal);
   }
 
   var sectionMeta = {
-    resumen: { title: "Resumen del sitio", subtitle: "Panel de control general", search: "Buscar noticias, autores...", action: "Nueva noticia" },
-    noticias: { title: "Gestión de Noticias", subtitle: "Publicaciones en base de datos Supabase", search: "Buscar noticia por título...", action: "Nueva noticia" },
+    resumen: { title: "Resumen del sitio", subtitle: "Panel de control general", search: "Buscar noticias...", action: "Nueva noticia" },
+    noticias: { title: "Gestión de Noticias", subtitle: "Publicaciones", search: "Buscar noticia por título...", action: "Nueva noticia" },
     categorias: { title: "Gestión de Categorías", subtitle: "Organiza las secciones deportivas", search: "Buscar categoría...", action: "Nueva categoría" },
-    autores: { title: "Equipo Editorial", subtitle: "Autores y redactores", search: "Buscar autor...", action: null },
     comentarios: { title: "Comentarios", subtitle: "Moderación de comentarios", search: "Buscar comentario...", action: null },
     trafico: { title: "Tráfico del sitio", subtitle: "Estadísticas y analítica", search: "Buscar...", action: null }
   };
@@ -750,7 +714,6 @@
     if (name === "resumen") renderResumenStats();
     if (name === "noticias") { state.noticiasQuery = ""; renderNoticias(); }
     if (name === "categorias") renderCategorias();
-    if (name === "autores") renderAutores();
     if (name === "comentarios") renderComentarios();
 
     var sidebar = document.getElementById("sidebar");
@@ -880,7 +843,7 @@
       setSection(params.get("seccion"));
     }
     if (params.get("creada") === "1") {
-      showToast("¡Excelente!", "La noticia ha sido registrada en Supabase.", "success");
+      showToast("¡Excelente!", "La noticia ha sido registrada correctamente.", "success");
     }
   });
 

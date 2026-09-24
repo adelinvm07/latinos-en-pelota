@@ -248,7 +248,7 @@
             <div class="topbar">
                 <div class="topbar-titles">
                     <h1>Crear Nueva Noticia</h1>
-                    <p>Redacta, clasifica y publica contenido deportivo conectado con Supabase</p>
+                    <p>Redacta tu contenido deportiv.</p>
                 </div>
                 <div class="topbar-actions">
                     <button type="button" class="btn btn-ghost" id="btn-vista-previa">
@@ -280,7 +280,6 @@
                                 type="text"
                                 id="titulo"
                                 class="input-control"
-                                placeholder="Ej: Las Águilas Cibaeñas aseguran su pase a la final tras emocionante remontada"
                                 required
                                 maxlength="160"
                                 style="font-size:16px;font-weight:600;padding:12px 14px;"
@@ -297,14 +296,13 @@
                     <div class="panel" style="padding:20px;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" for="subtitulo">
-                                <span>Subtítulo o Bajada (Resumen introductorio)</span>
+                                <span>Subtítulo</span>
                                 <span class="char-counter" id="subtitulo-counter">0 / 220</span>
                             </label>
                             <textarea
                                 id="subtitulo"
                                 class="input-control"
                                 rows="2"
-                                placeholder="Breve bajada de 1 a 2 líneas que sintetiza el hecho noticioso..."
                                 required
                                 maxlength="260"
                                 style="resize:vertical;font-size:14px;line-height:1.5;"
@@ -317,7 +315,6 @@
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" style="margin-bottom:10px;">
                                 <span>Cuerpo del Artículo</span>
-                                <span class="form-hint">Usa negrita, enlaces, listas y encabezados</span>
                             </label>
 
                             <!-- Quill Container -->
@@ -380,7 +377,7 @@
 
                         <div class="form-group" style="margin-bottom:0;">
                             <select id="categoria" class="input-control" required style="font-weight:600;">
-                                <option value="" disabled selected>Cargando categorías de Supabase...</option>
+                                <option value="" disabled selected>Cargando categorías...</option>
                             </select>
                             <span class="form-hint" style="margin-top:4px;">Sección donde aparecerá esta noticia.</span>
                         </div>
@@ -493,7 +490,7 @@
                         required
                         autocomplete="off"
                     >
-                    <span class="form-hint" style="margin-top:4px;">Se creará en Supabase y se seleccionará automáticamente.</span>
+                    <span class="form-hint" style="margin-top:4px;">Se creará y seleccionará automáticamente.</span>
                 </div>
                 <p id="catRapidaError" style="color:var(--danger);font-size:12.5px;display:none;margin-top:8px;"></p>
             </div>

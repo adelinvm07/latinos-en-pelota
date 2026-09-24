@@ -25,11 +25,11 @@
   --surface-hover: #F8FAFC;
   --surface-card: #FFFFFF;
   --text: #0F172A; /* Texto oscuro de alta legibilidad */
-  --text-muted: #64748B;
+  --text-muted: #0F172A;
   --border: #E2E8F0;
   --border-focus: #CBD5E1;
   --badge-bg: #EEF2F6;
-  --badge-text: #475569;
+  --badge-text: #0F172A;
 
   --blue: #3f8fd6;
   --gold: #f2c230;
