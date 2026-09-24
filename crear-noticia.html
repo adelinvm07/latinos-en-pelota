@@ -1,69 +1,131 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Nueva noticia — Panel de administración</title>
-<link rel="stylesheet" href="css/style.css">
-<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Noticia — Panel de Administración</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <style>
+        /* Ajustes específicos para que los campos tengan un ancho cómodo y no se estiren feo */
+        .form-container {
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        .input-control {
+            background: var(--surface, #ffffff);
+            border: 1px solid var(--border, #e2e6ea);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            color: var(--text, #1a1a1a);
+            width: 100%;
+            outline: none;
+        }
+        .input-control:focus {
+            border-color: var(--red, #d32e2e);
+        }
+        /* Forzar visibilidad del subtítulo en el topbar */
+        .topbar .sub {
+            color: #9a9ca6 !important;
+        }
+    </style>
 </head>
 <body>
-<div class="app">
-  <main class="main" style="width:100%;">
-    <div class="content" style="max-width:800px; margin: 0 auto;">
-      <div class="topbar" style="margin-bottom: 24px;">
-        <div class="topbar-titles">
-          <h1>Nueva noticia</h1>
-          <p>Crea y publica contenido para el portal</p>
-        </div>
-      </div>
 
-      <div class="table-wrap" style="padding: 24px;">
-        <form id="form-noticia">
-          <div class="campo" style="margin-bottom: 16px;">
-            <label for="titulo" style="display:block; margin-bottom:6px; font-weight:600;">Título</label>
-            <input type="text" id="titulo" class="search-input" style="width:100%;" required>
-          </div>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">N</div>
+                <div class="brand-text">
+                    Noticiero
+                    <span>Panel Admin</span>
+                </div>
+            </div>
+            
+            <nav class="nav">
+                <span class="nav-label">Menu</span>
+                <button class="nav-item" onclick="window.location.href='Panel-de-admin.html'">Resumen</button>
+                <button class="nav-item active">Nueva Noticia</button>
+            </nav>
 
-          <div class="campo" style="margin-bottom: 16px;">
-            <label for="subtitulo" style="display:block; margin-bottom:6px; font-weight:600;">Subtítulo</label>
-            <input type="text" id="subtitulo" class="search-input" style="width:100%;" required>
-          </div>
+            <div class="sidebar-foot">
+                <div class="avatar">AV</div>
+                <div class="avatar-info">
+                    <p>Adelin Vidal</p>
+                    <span>Editora</span>
+                </div>
+            </div>
+        </aside>
 
-          <div class="campo" style="margin-bottom: 16px;">
-            <label for="categoria" style="display:block; margin-bottom:6px; font-weight:600;">Categoría</label>
-            <select id="categoria" class="search-input" style="width:100%;" required>
-              <option value="" disabled selected>Cargando categorías...</option>
-            </select>
-          </div>
+        <!-- Contenido Principal -->
+        <main class="main">
+            <header class="topbar">
+                <div>
+                    <h1>Crear Noticia</h1>
+                    <p class="sub">Redacta y publica nuevo contenido para el portal</p>
+                </div>
+            </header>
 
-          <div class="campo" style="margin-bottom: 16px;">
-            <label for="imagen" style="display:block; margin-bottom:6px; font-weight:600;">Imagen de portada</label>
-            <input type="file" id="imagen" accept="image/*" style="display:block; margin-bottom:8px;">
-            <img id="preview-imagen" class="preview-imagen" style="max-width:200px; border-radius:8px; display:block;">
-          </div>
+            <!-- Panel contenedor -->
+            <section class="panel">
+                <form id="form-noticia" class="form-container">
 
-          <div class="campo" style="margin-bottom: 24px;">
-            <label for="editor-contenido" style="display:block; margin-bottom:6px; font-weight:600;">Contenido</label>
-            <div id="editor-contenido" style="height: 250px; background: var(--bg); color: var(--text);"></div>
-          </div>
+                    <!-- Campo Título -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label for="titulo" style="font-size: 13px; font-weight: 600;">Título</label>
+                        <input type="text" id="titulo" class="input-control" placeholder="Escribe el título principal..." required>
+                    </div>
 
-          <div class="botones" style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button type="button" class="btn btn-ghost" id="btn-cancelar">Cancelar</button>
-            <button type="button" class="btn btn-ghost" id="btn-borrador">Guardar borrador</button>
-            <button type="button" class="btn btn-primary" id="btn-publicar">Publicar</button>
-          </div>
+                    <!-- Campo Subtítulo -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label for="subtitulo" style="font-size: 13px; font-weight: 600;">Subtítulo (Dek)</label>
+                        <input type="text" id="subtitulo" class="input-control" placeholder="Breve bajada o resumen..." required>
+                    </div>
 
-          <p id="mensaje" style="margin-top: 14px; font-weight:600; text-align:right;"></p>
-        </form>
-      </div>
+                    <!-- Selector de Categoría -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label for="categoria" style="font-size: 13px; font-weight: 600;">Categoría</label>
+                        <select id="categoria" class="input-control" required>
+                            <option value="" disabled selected>Cargando categorías...</option>
+                        </select>
+                    </div>
+
+                    <!-- Imagen de Portada -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label for="imagen" style="font-size: 13px; font-weight: 600;">Imagen de Portada</label>
+                        <input type="file" id="imagen" accept="image/*" style="font-size: 13px;">
+                        <img id="preview-imagen" class="thumb" style="max-width: 250px; display: none; margin-top: 0.5rem;" alt="Vista previa">
+                    </div>
+
+                    <!-- Editor Quill -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label for="editor-contenido" style="font-size: 13px; font-weight: 600;">Contenido</label>
+                        <div id="editor-contenido" style="height: 280px; background: var(--surface, #ffffff); border-radius: 0 0 8px 8px;"></div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1rem;">
+                        <button type="button" class="icon-btn" id="btn-cancelar" style="width: auto; padding: 9px 16px; font-weight: 600; cursor: pointer;">Cancelar</button>
+                        <button type="button" class="icon-btn" id="btn-borrador" style="width: auto; padding: 9px 16px; font-weight: 600; cursor: pointer;">Guardar Borrador</button>
+                        <button type="button" class="btn-new" id="btn-publicar">Publicar Noticia</button>
+                    </div>
+
+                    <!-- Mensaje de estado -->
+                    <p id="mensaje" style="font-size: 13px; font-weight: 600; text-align: right;"></p>
+
+                </form>
+            </section>
+        </main>
     </div>
-  </main>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-<script src="crear-noticia.html"></script>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <script src="js/crear-noticia.js"></script>
 </body>
 </html>

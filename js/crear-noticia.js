@@ -15,7 +15,7 @@ const inputImagen = document.getElementById("imagen");
 const previewImagen = document.getElementById("preview-imagen");
 const mensaje = document.getElementById("mensaje");
 
-// Función para transformar el título en un slug limpio (ej: "Hola Mundo" -> "hola-mundo")
+// Función para transformar el título en un slug limpio
 function generarSlug(texto) {
   return texto
     .toLowerCase()
@@ -29,7 +29,7 @@ function generarSlug(texto) {
 async function cargarCategorias() {
   const { data, error } = await supabase
     .from("categorias")
-    .select("id, nombre")
+    .select("nombre")
     .order("nombre");
 
   if (error) {
@@ -38,10 +38,11 @@ async function cargarCategorias() {
   }
 
   selectCategoria.innerHTML = '<option value="" disabled selected>Selecciona una categoría</option>';
+  
   data.forEach((cat) => {
     const opt = document.createElement("option");
-    opt.value = cat.id;
-    opt.textContent = cat.nombre;
+    opt.value = cat.nombre;       // Se guarda el nombre en texto plano
+    opt.textContent = cat.nombre; // Lo que ve el usuario
     selectCategoria.appendChild(opt);
   });
 }
@@ -50,11 +51,12 @@ inputImagen.addEventListener("change", () => {
   const archivo = inputImagen.files[0];
   if (!archivo) return;
   previewImagen.src = URL.createObjectURL(archivo);
+  previewImagen.style.display = "block";
 });
 
 function mostrarMensaje(texto, tipo) {
   mensaje.textContent = texto;
-  mensaje.style.color = tipo === "error" ? "var(--danger)" : "var(--success)";
+  mensaje.style.color = tipo === "error" ? "var(--red, #d32e2e)" : "var(--green, #3f7d4f)";
 }
 
 async function subirImagen(archivo) {
@@ -72,12 +74,12 @@ async function subirImagen(archivo) {
 async function guardarNoticia(estado) {
   const titulo = document.getElementById("titulo").value.trim();
   const subtitulo = document.getElementById("subtitulo").value.trim();
-  const categoriaId = selectCategoria.value;
+  const categoriaSeleccionada = selectCategoria.value;
   const contenidoHtml = editor.root.innerHTML.trim();
   const contenidoVacio = editor.getText().trim().length === 0;
   const archivoImagen = inputImagen.files[0];
 
-  if (!titulo || !subtitulo || !categoriaId || contenidoVacio) {
+  if (!titulo || !subtitulo || !categoriaSeleccionada || contenidoVacio) {
     mostrarMensaje("Completa todos los campos obligatorios.", "error");
     return;
   }
@@ -92,10 +94,11 @@ async function guardarNoticia(estado) {
 
     const slug = generarSlug(titulo);
 
+    // Ojo: guardamos 'categoria' como texto, asegurate de que en Supabase tu tabla noticias tenga una columna 'categoria' de tipo text
     const { error } = await supabase.from("noticias").insert({
       titulo,
       subtitulo,
-      categoria_id: Number(categoriaId),
+      categoria: categoriaSeleccionada, 
       contenido: contenidoHtml,
       imagen_url: imagenUrl || "",
       slug,
@@ -111,7 +114,7 @@ async function guardarNoticia(estado) {
     );
 
     setTimeout(() => {
-      window.location.href = "admin.html";
+      window.location.href = "Panel-de-admin.html";
     }, 1000);
   } catch (err) {
     mostrarMensaje("Error al guardar: " + err.message, "error");
