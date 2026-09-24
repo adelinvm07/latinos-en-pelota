@@ -2,130 +2,517 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nueva Noticia — Panel de Administración</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Crear Noticia — Latinos en Pelota</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
     <style>
-        /* Ajustes específicos para que los campos tengan un ancho cómodo y no se estiren feo */
-        .form-container {
-            max-width: 800px;
+        /* Estilos específicos de la interfaz de redacción */
+        .breadcrumbs {
             display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
         }
-        .input-control {
-            background: var(--surface, #ffffff);
-            border: 1px solid var(--border, #e2e6ea);
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 14px;
-            color: var(--text, #1a1a1a);
+        .breadcrumbs a {
+            color: var(--text-muted);
+            transition: color 0.15s;
+        }
+        .breadcrumbs a:hover {
+            color: var(--accent);
+        }
+        .breadcrumbs span {
+            color: var(--border);
+        }
+
+        .char-counter {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .slug-preview {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            background: #F8FAFC;
+            padding: 6px 10px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border);
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .slug-preview code {
+            color: var(--accent);
+        }
+
+        /* Estado selector pills */
+        .status-picker {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            background: var(--badge-bg);
+            padding: 4px;
+            border-radius: var(--radius-xs);
+            margin-bottom: 16px;
+        }
+        .status-opt {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.15s;
+            border: none;
+            background: transparent;
+        }
+        .status-opt.active {
+            background: #FFFFFF;
+            color: var(--text);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+        .status-opt.active[data-status="publicado"] .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 6px var(--success);
+        }
+        .status-opt.active[data-status="borrador"] .status-dot {
+            background: var(--warning);
+        }
+
+        .editor-wordcount {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #F8FAFC;
+            border: 1px solid var(--border);
+            border-top: none;
+            border-bottom-left-radius: var(--radius-sm);
+            border-bottom-right-radius: var(--radius-sm);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Modal Preview Reader */
+        .preview-article {
+            max-width: 720px;
+            margin: 0 auto;
+            color: var(--text);
+        }
+        .preview-article .preview-tag {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .preview-article h1 {
+            font-size: 28px;
+            line-height: 1.25;
+            margin-bottom: 12px;
+            color: var(--text);
+            font-weight: 800;
+        }
+        .preview-article .preview-dek {
+            font-size: 16px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+        .preview-article .preview-meta {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .preview-article .preview-img {
             width: 100%;
-            outline: none;
+            border-radius: 8px;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            margin-bottom: 24px;
+            background: #000;
         }
-        .input-control:focus {
-            border-color: var(--red, #d32e2e);
+        .preview-article .preview-body {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text);
         }
-        /* Forzar visibilidad del subtítulo en el topbar */
-        .topbar .sub {
-            color: #9a9ca6 !important;
+        .preview-article .preview-body p {
+            margin-bottom: 16px;
+        }
+        .preview-article .preview-body h2, .preview-article .preview-body h3 {
+            color: var(--text);
+            margin: 24px 0 12px;
+        }
+        .preview-article .preview-body a {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+        .preview-article .preview-body ul, .preview-article .preview-body ol {
+            padding-left: 24px;
+            margin-bottom: 16px;
         }
     </style>
 </head>
 <body>
 
-    <div class="app">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="brand">
-                <div class="brand-mark">N</div>
-                <div class="brand-text">
-                    Noticiero
-                    <span>Panel Admin</span>
-                </div>
-            </div>
-            
-            <nav class="nav">
-                <span class="nav-label">Menu</span>
-                <button class="nav-item" onclick="window.location.href='Panel-de-admin.html'">Resumen</button>
-                <button class="nav-item active">Nueva Noticia</button>
-            </nav>
+<div class="app">
 
-            <div class="sidebar-foot">
-                <div class="avatar">AV</div>
-                <div class="avatar-info">
-                    <p>Adelin Vidal</p>
-                    <span>Editora</span>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Contenido Principal -->
-        <main class="main">
-            <header class="topbar">
-                <div>
-                    <h1>Crear Noticia</h1>
-                    <p class="sub">Redacta y publica nuevo contenido para el portal</p>
-                </div>
-            </header>
-
-            <!-- Panel contenedor -->
-            <section class="panel">
-                <form id="form-noticia" class="form-container">
-
-                    <!-- Campo Título -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label for="titulo" style="font-size: 13px; font-weight: 600;">Título</label>
-                        <input type="text" id="titulo" class="input-control" placeholder="Escribe el título principal..." required>
-                    </div>
-
-                    <!-- Campo Subtítulo -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label for="subtitulo" style="font-size: 13px; font-weight: 600;">Subtítulo (Dek)</label>
-                        <input type="text" id="subtitulo" class="input-control" placeholder="Breve bajada o resumen..." required>
-                    </div>
-
-                    <!-- Selector de Categoría -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label for="categoria" style="font-size: 13px; font-weight: 600;">Categoría</label>
-                        <select id="categoria" class="input-control" required>
-                            <option value="" disabled selected>Cargando categorías...</option>
-                        </select>
-                    </div>
-
-                    <!-- Imagen de Portada -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label for="imagen" style="font-size: 13px; font-weight: 600;">Imagen de Portada</label>
-                        <input type="file" id="imagen" accept="image/*" style="font-size: 13px;">
-                        <img id="preview-imagen" class="thumb" style="max-width: 250px; display: none; margin-top: 0.5rem;" alt="Vista previa">
-                    </div>
-
-                    <!-- Editor Quill -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label for="editor-contenido" style="font-size: 13px; font-weight: 600;">Contenido</label>
-                        <div id="editor-contenido" style="height: 280px; background: var(--surface, #ffffff); border-radius: 0 0 8px 8px;"></div>
-                    </div>
-
-                    <!-- Botones de Acción -->
-                    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1rem;">
-                        <button type="button" class="icon-btn" id="btn-cancelar" style="width: auto; padding: 9px 16px; font-weight: 600; cursor: pointer;">Cancelar</button>
-                        <button type="button" class="icon-btn" id="btn-borrador" style="width: auto; padding: 9px 16px; font-weight: 600; cursor: pointer;">Guardar Borrador</button>
-                        <button type="button" class="btn-new" id="btn-publicar">Publicar Noticia</button>
-                    </div>
-
-                    <!-- Mensaje de estado -->
-                    <p id="mensaje" style="font-size: 13px; font-weight: 600; text-align: right;"></p>
-
-                </form>
-            </section>
-        </main>
+    <!-- Mobile Topbar -->
+    <div class="mobile-topbar">
+        <a href="Panel-de-admin.html" class="btn btn-ghost btn-sm">← Volver al Panel</a>
+        <strong>Crear Noticia</strong>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-publicar-mobile">Publicar</button>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-    <script src="js/crear-noticia.js"></script>
+    <!-- Sidebar de Navegación -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">LP</div>
+            <div>
+                <div class="brand-name">Latinos en Pelota</div>
+                <div class="brand-sub">Panel de Administración</div>
+            </div>
+        </div>
+
+        <a href="Panel-de-admin.html" class="nav-item">
+            <span>← Volver al Dashboard</span>
+        </a>
+
+        <div class="nav-group-label">Módulos</div>
+        <a href="Panel-de-admin.html?seccion=noticias" class="nav-item">
+            <span>Todas las Noticias</span>
+        </a>
+        <a href="crear-noticia.html" class="nav-item active">
+            <span>➕ Nueva Noticia</span>
+        </a>
+        <a href="Panel-de-admin.html?seccion=categorias" class="nav-item">
+            <span>Categorías Deportivas</span>
+        </a>
+
+        <div class="nav-group-label">Acceso Directo</div>
+        <a href="latinos-en-pelota.html" target="_blank" class="nav-item" style="color:var(--blue);">
+            <span>🌐 Ver Sitio Web</span>
+            <span style="font-size:12px;">↗</span>
+        </a>
+
+        <div class="sidebar-foot" id="sidebarUserFoot">
+            <div class="avatar" id="cn-userAvatar">--</div>
+            <div class="avatar-info" style="flex:1;overflow:hidden;">
+                <p id="cn-userNameDisplay" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Usuario</p>
+                <span id="cn-userEmailDisplay" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;"></span>
+            </div>
+            <button type="button" class="btn-text danger" id="cn-btnLogout" title="Cerrar sesión" style="padding:6px;display:flex;align-items:center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="main">
+        <div class="content">
+
+            <!-- Breadcrumbs y Encabezado -->
+            <div class="breadcrumbs">
+                <a href="Panel-de-admin.html">Dashboard</a>
+                <span>/</span>
+                <a href="Panel-de-admin.html?seccion=noticias">Noticias</a>
+                <span>/</span>
+                <span style="color:#fff;">Redactar Noticia</span>
+            </div>
+
+            <div class="topbar">
+                <div class="topbar-titles">
+                    <h1>Crear Nueva Noticia</h1>
+                    <p>Redacta, clasifica y publica contenido deportivo conectado con Supabase</p>
+                </div>
+                <div class="topbar-actions">
+                    <button type="button" class="btn btn-ghost" id="btn-vista-previa">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Vista Previa
+                    </button>
+                    <button type="button" class="btn btn-ghost" id="btn-borrador">Guardar Borrador</button>
+                    <button type="button" class="btn btn-primary" id="btn-publicar">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        Publicar Noticia
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formulario Principal (Layout 2 columnas) -->
+            <form id="form-noticia" class="editor-layout">
+
+                <!-- COLUMNA IZQUIERDA: CONTENIDO Y TEXTOS -->
+                <div style="display:flex;flex-direction:column;gap:18px;">
+
+                    <!-- Campo: Título -->
+                    <div class="panel" style="padding:20px;">
+                        <div class="form-group" style="margin-bottom:10px;">
+                            <label class="form-label" for="titulo">
+                                <span>Título Principal</span>
+                                <span class="char-counter" id="titulo-counter">0 / 120</span>
+                            </label>
+                            <input
+                                type="text"
+                                id="titulo"
+                                class="input-control"
+                                placeholder="Ej: Las Águilas Cibaeñas aseguran su pase a la final tras emocionante remontada"
+                                required
+                                maxlength="160"
+                                style="font-size:16px;font-weight:600;padding:12px 14px;"
+                                autocomplete="off"
+                            >
+                        </div>
+                        <div class="slug-preview" id="slug-preview-container">
+                            <span>slug:</span>
+                            <code id="slug-text">...</code>
+                        </div>
+                    </div>
+
+                    <!-- Campo: Subtítulo (Bajada / Dek) -->
+                    <div class="panel" style="padding:20px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" for="subtitulo">
+                                <span>Subtítulo o Bajada (Resumen introductorio)</span>
+                                <span class="char-counter" id="subtitulo-counter">0 / 220</span>
+                            </label>
+                            <textarea
+                                id="subtitulo"
+                                class="input-control"
+                                rows="2"
+                                placeholder="Breve bajada de 1 a 2 líneas que sintetiza el hecho noticioso..."
+                                required
+                                maxlength="260"
+                                style="resize:vertical;font-size:14px;line-height:1.5;"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Campo: Editor Quill de Contenido -->
+                    <div class="panel" style="padding:20px;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label class="form-label" style="margin-bottom:10px;">
+                                <span>Cuerpo del Artículo</span>
+                                <span class="form-hint">Usa negrita, enlaces, listas y encabezados</span>
+                            </label>
+
+                            <!-- Quill Container -->
+                            <div id="editor-contenido"></div>
+
+                            <div class="editor-wordcount">
+                                <span id="word-count">0 palabras</span>
+                                <span id="read-time">1 min de lectura estimada</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- COLUMNA DERECHA: SIDEBAR DE METADATOS Y PUBLICACIÓN -->
+                <div style="display:flex;flex-direction:column;gap:18px;">
+
+                    <!-- Panel: Publicación y Estado -->
+                    <div class="panel" style="padding:20px;">
+                        <div class="panel-header" style="margin-bottom:14px;">
+                            <span class="panel-title">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                Estado de Publicación
+                            </span>
+                        </div>
+
+                        <!-- Selector de Estado -->
+                        <div class="status-picker">
+                            <button type="button" class="status-opt active" data-status="publicado" id="opt-publicado">
+                                <span class="status-dot"></span>
+                                Publicado
+                            </button>
+                            <button type="button" class="status-opt" data-status="borrador" id="opt-borrador">
+                                <span class="status-dot"></span>
+                                Borrador
+                            </button>
+                        </div>
+
+                        <div style="display:flex;flex-direction:column;gap:10px;">
+                            <button type="button" class="btn btn-primary" id="btn-sidebar-publicar" style="width:100%;">
+                                Publicar Noticia
+                            </button>
+                            <button type="button" class="btn btn-ghost" id="btn-sidebar-borrador" style="width:100%;">
+                                Guardar como Borrador
+                            </button>
+                        </div>
+
+                        <p id="mensaje-estado" style="font-size:12.5px;margin-top:14px;text-align:center;color:var(--text-muted);"></p>
+                    </div>
+
+                    <!-- Panel: Categoría -->
+                    <div class="panel" style="padding:20px;">
+                        <div class="panel-header" style="margin-bottom:12px;">
+                            <span class="panel-title">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                                Categoría Deportiva
+                            </span>
+                            <button type="button" class="btn-text" id="btn-nueva-cat-rapida" style="font-size:12px;">+ Nueva</button>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:0;">
+                            <select id="categoria" class="input-control" required style="font-weight:600;">
+                                <option value="" disabled selected>Cargando categorías de Supabase...</option>
+                            </select>
+                            <span class="form-hint" style="margin-top:4px;">Sección donde aparecerá esta noticia.</span>
+                        </div>
+                    </div>
+
+                    <!-- Panel: Imagen de Portada -->
+                    <div class="panel" style="padding:20px;">
+                        <div class="panel-header" style="margin-bottom:12px;">
+                            <span class="panel-title">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                                Imagen de Portada
+                            </span>
+                        </div>
+
+                        <!-- Tabs: Subir Archivo vs Enlace URL -->
+                        <div class="media-tabs">
+                            <button type="button" class="media-tab active" id="tab-upload">Subir Archivo</button>
+                            <button type="button" class="media-tab" id="tab-url">Pegar URL</button>
+                        </div>
+
+                        <!-- Zona de Subida por Archivo -->
+                        <div id="media-mode-upload">
+                            <div class="image-uploader-box" id="dropzone">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" style="margin:0 auto 8px;display:block;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                <p style="font-size:13px;font-weight:600;margin-bottom:4px;color:#fff;">Haz clic o arrastra una imagen</p>
+                                <p style="font-size:11.5px;color:var(--text-muted);">PNG, JPG o WEBP recomendada</p>
+                                <input type="file" id="imagen-file" accept="image/*" style="display:none;">
+                            </div>
+                        </div>
+
+                        <!-- Zona de URL Directa -->
+                        <div id="media-mode-url" style="display:none;">
+                            <input
+                                type="url"
+                                id="imagen-url-input"
+                                class="input-control"
+                                placeholder="https://ejemplo.com/foto-estadio.jpg"
+                            >
+                            <span class="form-hint" style="margin-top:4px;display:block;">Pega el enlace directo a una imagen de la web.</span>
+                        </div>
+
+                        <!-- Vista Previa de la Imagen Seleccionada -->
+                        <div class="image-preview-wrapper" id="preview-wrapper" style="display:none;">
+                            <img id="preview-img-element" src="" alt="Vista previa de portada">
+                            <div class="image-preview-overlay">
+                                <button type="button" class="btn btn-sm btn-ghost" id="btn-quitar-imagen" style="background:rgba(0,0,0,0.7);color:#fff;border:none;">
+                                    ✕ Quitar
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+    </main>
+</div>
+
+<!-- =========================================================================
+     MODAL: VISTA PREVIA DEL LECTOR (SIMULACIÓN WEB)
+     ========================================================================= -->
+<div class="modal-backdrop" id="modalPreview">
+    <div class="modal" style="max-width:800px;max-height:90vh;display:flex;flex-direction:column;">
+        <div class="modal-header">
+            <h3>Vista Previa del Lector</h3>
+            <button class="modal-close" id="btn-cerrar-preview">&times;</button>
+        </div>
+        <div class="modal-body" style="overflow-y:auto;flex:1;padding:28px 32px;">
+            <article class="preview-article">
+                <span class="preview-tag" id="pv-categoria">DEPORTE</span>
+                <h1 id="pv-titulo">Título de la noticia</h1>
+                <p class="preview-dek" id="pv-subtitulo">Bajada o resumen del artículo.</p>
+                <div class="preview-meta">
+                    Redacción Latinos en Pelota · <span id="pv-fecha">Hoy</span>
+                </div>
+                <img id="pv-imagen" class="preview-img" src="" alt="Imagen de portada" style="display:none;">
+                <div class="preview-body" id="pv-contenido">
+                    <p>Contenido del artículo...</p>
+                </div>
+            </article>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" id="btn-cerrar-preview-2">Seguir Editando</button>
+            <button type="button" class="btn btn-primary" id="btn-publicar-desde-preview">Publicar Ahora</button>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================================
+     MODAL: NUEVA CATEGORÍA RÁPIDA
+     ========================================================================= -->
+<div class="modal-backdrop" id="modalNuevaCatRapida">
+    <div class="modal" style="max-width:440px;">
+        <div class="modal-header">
+            <h3>Nueva Categoría Rápida</h3>
+            <button class="modal-close" id="btn-cerrar-cat-rapida">&times;</button>
+        </div>
+        <form id="formCatRapida">
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label" for="nuevaCatRapidaInput">Nombre de la Categoría</label>
+                    <input
+                        type="text"
+                        id="nuevaCatRapidaInput"
+                        class="input-control"
+                        placeholder="Ej: Tenis, Automovilismo, Voleibol..."
+                        required
+                        autocomplete="off"
+                    >
+                    <span class="form-hint" style="margin-top:4px;">Se creará en Supabase y se seleccionará automáticamente.</span>
+                </div>
+                <p id="catRapidaError" style="color:var(--danger);font-size:12.5px;display:none;margin-top:8px;"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" id="btn-cancelar-cat-rapida">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="btn-guardar-cat-rapida">Crear y Seleccionar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Contenedor Toast -->
+<div id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script src="js/crear-noticia.js"></script>
+
 </body>
 </html>
