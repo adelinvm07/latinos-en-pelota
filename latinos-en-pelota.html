@@ -311,5 +311,25 @@
 
 <!-- Script de búsqueda de noticias -->
 <script src="js/buscador.js"></script>
+
+<script>
+(function () {
+  try {
+    var sid = localStorage.getItem('sid');
+    if (!sid) { sid = crypto.randomUUID(); localStorage.setItem('sid', sid); }
+    fetch('https://uoxtbzfmznnvhjdwdlrr.supabase.co/rest/v1/visitas', {
+      method: 'POST',
+      headers: {
+        'apikey': 'sb_publishable_Ro3jxG0zgAYjJeaj97h02A_DcSYKCgh',
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ ruta: location.pathname, sesion_id: sid }),
+      keepalive: true
+    }).catch(function () {});
+  } catch (e) {}
+})();
+</script>
+
 </body>
 </html>
