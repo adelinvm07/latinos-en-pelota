@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" href="assets/logo-latinos.png">
+<title>Latinos en Pelota</title>
+<style>
+  :root{
+    --navy:#0f1a2e;
+    --navy2:#13213a;
+    --text:#1a2333;
+    --muted:#6b7688;
+    --line:#e7e9ee;
+    --bg:#f5f6f8;
+    --yellow:#f2c14e;
+    --red:#d64545;
+    --blue:#3d7fc7;
+    --green:#3f8f5f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  a{color:inherit;text-decoration:none;}
+  a:focus-visible{outline:3px solid var(--yellow);outline-offset:2px;}
+  img{max-width:100%;}
+
+  /* ---------- Encabezado (igual que la portada) ---------- */
+  header.site{
+    background:var(--navy);
+    color:#fff;
+    padding:22px 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .logo{
+    width:52px;height:52px;border-radius:50%;
+    background:#fff;
+    border:2px solid var(--yellow);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    padding:4px;
+    flex-shrink:0;
+  }
+  .logo img{width:100%;height:100%;object-fit:contain;border-radius:50%;}
+  .brand h1{margin:0;font-size:22px;font-weight:700;}
+  .brand p{margin:2px 0 0;font-size:13px;color:#9fb0c9;}
+  .date{color:#9fb0c9;font-size:14px;white-space:nowrap;}
+  .header-right{display:flex;align-items:center;gap:16px;}
+  .btn-inicio{
+    font-size:13px;color:var(--yellow);padding:6px 12px;
+    border:1px solid rgba(242,193,78,.4);border-radius:4px;font-weight:600;
+  }
+
+  /* ---------- Etiquetas de categoría ---------- */
+  .tag{
+    display:inline-block;font-size:12px;font-weight:800;
+    padding:5px 10px;border-radius:3px;margin-bottom:16px;
+    color:#101010;
+  }
+  .tag.futbol{background:var(--yellow);}
+  .tag.futbol-red{background:var(--red);color:#fff;}
+  .tag.baloncesto{background:var(--blue);color:#fff;}
+  .tag.atletismo{background:var(--green);color:#fff;}
+
+  /* ---------- Artículo ---------- */
+  .noticia-wrap{
+    max-width:760px;margin:0 auto;
+    padding:36px 24px 72px;
+  }
+  .noticia h1{
+    margin:0 0 14px;
+    font-size:clamp(28px,4.6vw,42px);
+    line-height:1.15;
+    font-weight:800;
+    letter-spacing:-.01em;
+    color:var(--navy);
+  }
+  .noticia .subtitulo{
+    margin:0 0 18px;
+    font-size:clamp(17px,2.4vw,21px);
+    line-height:1.45;
+    color:var(--muted);
+  }
+  .noticia .byline{
+    color:var(--muted);font-size:14px;
+    padding-bottom:20px;margin-bottom:26px;
+    border-bottom:1px solid var(--line);
+  }
+  .portada{
+    margin:0 0 30px;
+    aspect-ratio:16/9;
+    border-radius:6px;
+    overflow:hidden;
+    background:#dde1e7;
+  }
+  .portada img{width:100%;height:100%;object-fit:cover;display:block;}
+
+  .contenido{font-size:18px;line-height:1.75;max-width:68ch;}
+  .contenido p{margin:0 0 1.2em;}
+  .contenido h2,.contenido h3{
+    margin:1.6em 0 .6em;line-height:1.25;color:var(--navy);
+  }
+  .contenido img{height:auto;border-radius:4px;}
+  .contenido a{color:var(--blue);text-decoration:underline;}
+  .contenido blockquote{
+    margin:1.5em 0;padding:4px 0 4px 18px;
+    border-left:4px solid var(--yellow);color:var(--muted);
+  }
+
+  /* ---------- Estados: cargando / error ---------- */
+  .estado{text-align:center;padding:70px 0;}
+  .estado h1{margin:0 0 10px;font-size:26px;color:var(--navy);}
+  .estado p{margin:0 0 22px;color:var(--muted);}
+  .volver{
+    display:inline-block;background:var(--navy);color:#fff;
+    font-size:14px;font-weight:700;padding:10px 18px;border-radius:4px;
+  }
+
+  footer{
+    background:var(--navy);color:#8394ab;text-align:center;
+    padding:26px 20px;font-size:13px;
+  }
+  footer a{color:#c3cede;text-decoration:underline;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <a class="brand" href="latinos-en-pelota.html">
+    <div class="logo"><img src="assets/Logo latinos .png" alt="Latinos en Pelota"></div>
+    <div>
+      <h1>Latinos en Pelota</h1>
+      <p>El deporte latino, a otro nivel</p>
+    </div>
+  </a>
+  <div class="header-right">
+    <div class="date" id="fecha-hoy"></div>
+    <a class="btn-inicio" href="latinos-en-pelota.html">Volver al inicio</a>
+  </div>
+</header>
+
+<main class="noticia-wrap" id="articulo">
+  <p class="estado">Cargando noticia...</p>
+</main>
+
+<footer>
+  © 2026 Portal deportivo · Todos los derechos reservados<br>
+  <a href="#">Política de privacidad</a> · <a href="#">Cookies</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/noticias.js"></script>
+
+</body>
+</html>
