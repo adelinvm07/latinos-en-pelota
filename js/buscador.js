@@ -1,24 +1,20 @@
 
-
 (function () {
   "use strict";
 
-  // Cache de noticias obtenidas de Supabase
   var todasLasNoticias = [];
   var categoriaActiva = "Todas";
   var textoBusqueda = "";
 
   // Elementos del DOM
+  var contenedorTabs = document.getElementById("contenedor-tabs");
   var inputBusqueda = document.querySelector(".search-box input");
   var formBusqueda = document.querySelector(".search-box");
-  var tabsNavegacion = document.querySelectorAll("nav.tabs a");
   var gridNoticias = document.querySelector(".grid");
   var heroArticulo = document.querySelector("article.hero");
 
-  // Imagen por defecto si la noticia no trae portada
   var IMAGEN_PLACEHOLDER = "https://commons.wikimedia.org/wiki/Special:FilePath/Etihad%20Stadium.jpg";
 
-  // Mapeo de clases CSS para las etiquetas según la categoría
   function obtenerClaseTag(categoria) {
     if (!categoria) return "futbol-red";
     var catLower = categoria.toLowerCase();
@@ -28,7 +24,6 @@
     return "futbol-red";
   }
 
-  // Formateador de fechas cortas
   function formatearFecha(isoString) {
     if (!isoString) return "Reciente";
     var d = new Date(isoString);
@@ -37,14 +32,57 @@
     return d.getDate() + " " + meses[d.getMonth()] + " " + d.getFullYear();
   }
 
-  // ===============================
-  // CARGAR NOTICIAS DESDE SUPABASE
-  // ===============================
-  async function cargarNoticias() {
-    if (!window.supabase) {
-      console.warn("Cliente Supabase no inicializado.");
-      return;
+  // =========================================================================
+  // CARGAR CATEGORÍAS REALES DESDE SUPABASE
+  // =========================================================================
+  async function cargarCategorias() {
+    if (!window.supabase || !contenedorTabs) return;
+
+    try {
+      var { data, error } = await window.supabase
+        .from("categorias")
+        .select("id, nombre")
+        .order("nombre", { ascending: true });
+
+      if (error) throw error;
+
+      var searchBoxHtml = contenedorTabs.querySelector(".search-box").outerHTML;
+
+      // Construir las pestañas dinámicamente
+      var htmlTabs = '<a href="#" class="active">Todas</a>';
+
+      if (data && data.length > 0) {
+        data.forEach(function (cat) {
+          htmlTabs += '<a href="#">' + escapeHtml(cat.nombre) + '</a>';
+        });
+      }
+
+      contenedorTabs.innerHTML = htmlTabs + searchBoxHtml;
+
+      // Re-vincular los elementos del buscador y eventos de las nuevas pestañas
+      inputBusqueda = document.querySelector(".search-box input");
+      formBusqueda = document.querySelector(".search-box");
+      inicializarEventos();
+
+    } catch (err) {
+      console.error("Error al cargar categorías dinámicas desde Supabase:", err);
     }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // =========================================================================
+  // CARGAR NOTICIAS DESDE SUPABASE
+  // =========================================================================
+  async function cargarNoticias() {
+    if (!window.supabase) return;
 
     if (gridNoticias) {
       gridNoticias.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px 0;">Cargando noticias desde Supabase...</p>';
@@ -70,7 +108,6 @@
         };
       });
 
-      // Renderizar vista
       aplicarFiltros();
 
     } catch (err) {
@@ -81,18 +118,16 @@
     }
   }
 
-  // ===================================
-  // LÓGICA DE FILTRADO Y RENDERIZADO
-  // ===================================
+  // =========================================================================
+  // FILTRADO Y RENDERIZADO
+  // =========================================================================
   function aplicarFiltros() {
     if (!gridNoticias) return;
 
     var noticiasFiltradas = todasLasNoticias.filter(function (noticia) {
-      // 1. Filtro de Categoría
       var coincideCategoria = (categoriaActiva === "Todas") ||
         (noticia.categoria.toLowerCase() === categoriaActiva.toLowerCase());
 
-      // 2. Filtro de Búsqueda (Texto)
       var term = textoBusqueda.toLowerCase();
       var coincideTexto = !term ||
         noticia.titulo.toLowerCase().includes(term) ||
@@ -108,7 +143,6 @@
   function renderizarResultados(lista) {
     if (!gridNoticias) return;
 
-    // Control del Banner Principal (Hero)
     if (heroArticulo) {
       if (categoriaActiva !== "Todas" || textoBusqueda.length > 0) {
         heroArticulo.style.display = "none";
@@ -119,7 +153,7 @@
 
     if (lista.length === 0) {
       var mensaje = todasLasNoticias.length === 0
-        ? "Aún no hay noticias publicadas en la base de datos. Ve al Panel Admin para publicar la primera."
+        ? "Aún no hay noticias publicadas en la base de datos."
         : 'No hay noticias que coincidan con la búsqueda "' + (textoBusqueda || categoriaActiva) + '".';
 
       gridNoticias.innerHTML = 
@@ -130,7 +164,6 @@
       return;
     }
 
-    // Dibujar las noticias encontradas
     gridNoticias.innerHTML = lista.map(function (item) {
       var claseTag = obtenerClaseTag(item.categoria);
       return (
@@ -147,18 +180,16 @@
     }).join("");
   }
 
-  // ========================================
-  // EVENT LISTENERS DE PESTAÑAS Y BUSCADOR
-  // ========================================
+  // =========================================================================
+  // EVENT LISTENERS
+  // =========================================================================
   function inicializarEventos() {
-    // Evitar que el formulario recargue la página al pulsar Enter
     if (formBusqueda) {
       formBusqueda.addEventListener("submit", function (e) {
         e.preventDefault();
       });
     }
 
-    // Escuchar la escritura en el input
     if (inputBusqueda) {
       inputBusqueda.addEventListener("input", function (e) {
         textoBusqueda = e.target.value.trim();
@@ -166,52 +197,32 @@
       });
     }
 
-    // Escuchar el clic en las pestañas de categorías
-    tabsNavegacion.forEach(function (tab) {
+    var tabs = document.querySelectorAll("nav.tabs a");
+    tabs.forEach(function (tab) {
       tab.addEventListener("click", function (e) {
-        // Evitar que el enlace navegue a '#'
         e.preventDefault();
-
-        // Cambiar la pestaña activa visualmente (cambia el borde rojo)
-        tabsNavegacion.forEach(function (t) { t.classList.remove("active"); });
+        tabs.forEach(function (t) { t.classList.remove("active"); });
         this.classList.add("active");
-
-        // Actualizar la categoría seleccionada
         categoriaActiva = this.textContent.trim();
         aplicarFiltros();
       });
     });
   }
 
-  // Inicializar todo cuando el DOM esté listo
-  document.addEventListener("DOMContentLoaded", function () {
-    inicializarEventos();
-    cargarNoticias();
+  function actualizarFechaHoy() {
+    var fechaElemento = document.getElementById("fecha-hoy");
+    if (!fechaElemento) return;
+    var hoy = new Date();
+    var opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    var fechaFormateada = hoy.toLocaleDateString('es-ES', opciones);
+    fechaElemento.textContent = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+  }
+
+  document.addEventListener("DOMContentLoaded", async function () {
+    actualizarFechaHoy();
+    await cargarCategorias();
+    await cargarNoticias();
   });
 
 })();
 
-function actualizarFechaHoy() {
-  var fechaElemento = document.getElementById("fecha-hoy");
-  if (!fechaElemento) return;
-
-  var hoy = new Date();
-
-  // Formatear la fecha en español (Ejemplo: "jueves, 24 de septiembre de 2026")
-  var opciones = { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  };
-  
-  var fechaFormateada = hoy.toLocaleDateString('es-ES', opciones);
-
-  // Colocar en mayúscula la primera letra del día de la semana
-  fechaElemento.textContent = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
-}
-
-// Llamar a la función cuando el documento esté listo
-document.addEventListener("DOMContentLoaded", function () {
-  actualizarFechaHoy();
-});
