@@ -185,7 +185,7 @@
   </div>
   <div style="display:flex;align-items:center;gap:16px;">
    <div class="date" id="fecha-hoy">Cargando fecha...</div>
-    <a href="Panel-de-admin.html" style="font-size:13px;color:var(--yellow);padding:6px 12px;border:1px solid rgba(242,193,78,0.4);border-radius:4px;font-weight:600;">Panel Admin</a>
+   <a href="Panel-de-admin.html" id="btnPanelAdmin" style="display: none; font-size:13px;color:var(--yellow);padding:6px 12px;border:1px solid rgba(242,193,78,0.4);border-radius:4px;font-weight:600;">Panel Admin</a>
   </div>
 </header>
 
@@ -299,6 +299,45 @@
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
+
+<!-- Script para validar rol de Administrador -->
+<script>
+  document.addEventListener("DOMContentLoaded", async function () {
+    const btnAdmin = document.getElementById("btnPanelAdmin");
+    if (!btnAdmin || !window.supabase) return;
+
+    try {
+      // 1. Obtener la sesión activa del usuario
+      const { data: { session } } = await window.supabase.auth.getSession();
+
+      if (!session || !session.user) {
+        btnAdmin.style.display = "none";
+        return;
+      }
+
+      // 2. Consultar el rol en la tabla de usuarios/perfiles
+      // Nota: Si tu tabla se llama "usuarios" en lugar de "perfiles", cambia la palabra abajo.
+      const { data: perfil, error } = await window.supabase
+        .from("perfiles") 
+        .select("rol")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      // 3. Verificar si el rol obtenido es estrictamente 'admin'
+      const esAdmin = perfil && (perfil.rol === "admin" || perfil.rol === "Admin");
+
+      if (esAdmin) {
+        btnAdmin.style.display = "inline-block"; // Únicamente si es Admin
+      } else {
+        btnAdmin.style.display = "none"; // Para cualquier otro rol (usuario/lector)
+      }
+
+    } catch (err) {
+      console.error("Error al verificar permisos:", err);
+      btnAdmin.style.display = "none";
+    }
+  });
+</script>
 
 <!-- Script de búsqueda de noticias -->
 <script src="js/buscador.js"></script>

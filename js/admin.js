@@ -111,44 +111,46 @@
   // =========================================================================
   // AUTENTICACIÓN Y CONTROL DE ACCESO
   // =========================================================================
-  async function verificarSesion() {
-    if (!window.supabase) return false;
+ async function verificarSesion() {
+  if (!window.supabase) return false;
 
-    try {
-      var { data, error } = await window.supabase.auth.getSession();
-      if (error) throw error;
+  try {
+    var { data, error } = await window.supabase.auth.getSession();
+    if (error) throw error;
 
-      var loginScreen = document.getElementById("adminLoginScreen");
-      var session = data ? data.session : null;
+    var loginScreen = document.getElementById("adminLoginScreen");
+    var btnAdminPublico = document.getElementById("btnPanelAdmin");
+    var session = data ? data.session : null;
 
-      if (!session) {
-        // No hay sesión activa: mostrar login exclusivo
-        if (loginScreen) loginScreen.style.display = "flex";
-        return false;
-      } else {
-        // Sesión activa: mostrar panel y actualizar info de usuario
-        if (loginScreen) loginScreen.style.display = "none";
-
-        var user = session.user;
-        var email = user.email || "";
-        var userName = email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "Usuario";
-
-        var nameEl = document.getElementById("userNameDisplay");
-        var emailEl = document.getElementById("userEmailDisplay");
-        var avatarEl = document.getElementById("userAvatar");
-
-        if (nameEl) nameEl.textContent = userName;
-        if (emailEl) emailEl.textContent = email;
-        if (avatarEl) avatarEl.textContent = email ? email.slice(0, 2).toUpperCase() : "--";
-
-        return true;
-      }
-    } catch (err) {
-      console.warn("Error al verificar sesión:", err);
+    if (!session) {
+      // Si no hay sesión: ocultar el botón en la página principal
+      if (btnAdminPublico) btnAdminPublico.style.display = "none";
+      if (loginScreen) loginScreen.style.display = "flex";
       return false;
-    }
-  }
+    } else {
+      // Si hay sesión: mostrar el botón en la página principal
+      if (btnAdminPublico) btnAdminPublico.style.display = "inline-block";
+      if (loginScreen) loginScreen.style.display = "none";
 
+      var user = session.user;
+      var email = user.email || "";
+      var userName = email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "Usuario";
+
+      var nameEl = document.getElementById("userNameDisplay");
+      var emailEl = document.getElementById("userEmailDisplay");
+      var avatarEl = document.getElementById("userAvatar");
+
+      if (nameEl) nameEl.textContent = userName;
+      if (emailEl) emailEl.textContent = email;
+      if (avatarEl) avatarEl.textContent = email ? email.slice(0, 2).toUpperCase() : "--";
+
+      return true;
+    }
+  } catch (err) {
+    console.warn("Error al verificar sesión:", err);
+    return false;
+  }
+}
   function configurarLogin() {
     var form = document.getElementById("adminLoginForm");
     var emailInput = document.getElementById("loginEmail");
