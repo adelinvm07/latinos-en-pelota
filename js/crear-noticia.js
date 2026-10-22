@@ -471,6 +471,8 @@
     var categoriaId = selectCategoria.value;
     var contenidoHtml = editor.root.innerHTML.trim();
     var contenidoVacio = editor.getText().trim().length === 0;
+    var checkDestacada = document.getElementById("es-destacada");
+    var esDestacada = checkDestacada ? checkDestacada.checked : false;
 
     // Validación de campos obligatorios
     if (!titulo) {
@@ -529,7 +531,8 @@
         imagen_url: imagenFinalUrl || "",
         slug: slug,
         estado: estado, // 'publicado' o 'borrador'
-        publicado_en: estado === "publicado" ? new Date().toISOString() : null
+        publicado_en: estado === "publicado" ? new Date().toISOString() : null,
+        es_destacada: esDestacada
       };
 
       var { data, error } = await window.supabase
@@ -574,7 +577,12 @@
       [btnPub, btnPubMobile, btnPubSide, btnBorr, btnBorrSide].forEach(function (b) {
         if (b) b.disabled = false;
       });
+
+
     }
+    
+
+
   }
 
   // Event listeners para los botones de guardar

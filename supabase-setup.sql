@@ -136,3 +136,7 @@ INSERT INTO public.categorias (nombre) VALUES
     ('Atletismo'),
     ('Tenis')
 ON CONFLICT (nombre) DO NOTHING;
+
+ALTER TABLE public.noticias 
+ADD COLUMN IF NOT EXISTS es_destacada BOOLEAN DEFAULT FALSE;
+
