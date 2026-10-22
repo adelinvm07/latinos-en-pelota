@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="icon" type="image/png" href="assets/Logo latinos .png">
+<link rel="icon" type="image/png" href="assets/logo-latinos.png">
 <title>Latinos en Pelota</title>
 <style>
   :root{
@@ -204,15 +204,9 @@
 
 <main>
 
-  <article class="hero">
-    <div class="media">
-      <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Etihad%20Stadium.jpg" alt="Estadio lleno durante un partido de fútbol">
-    </div>
+  <article class="hero" id="hero">
     <div class="body">
-      <span class="tag futbol">FÚTBOL</span>
-      <h2>La final del torneo continental se decide en los penaltis tras un partido vibrante</h2>
-      <p>El equipo visitante remontó dos goles en la segunda mitad antes de imponerse en la tanda desde los once metros, ante un estadio completamente entregado.</p>
-      <div class="byline">Redacción · 28 ago 2026</div>
+      <p>Cargando la noticia destacada...</p>
     </div>
   </article>
 
@@ -347,5 +341,25 @@
 
 <!-- Script de búsqueda de noticias -->
 <script src="js/buscador.js"></script>
+
+<script>
+(function () {
+  try {
+    var sid = localStorage.getItem('sid');
+    if (!sid) { sid = crypto.randomUUID(); localStorage.setItem('sid', sid); }
+    fetch('https://uoxtbzfmznnvhjdwdlrr.supabase.co/rest/v1/visitas', {
+      method: 'POST',
+      headers: {
+        'apikey': 'sb_publishable_Ro3jxG0zgAYjJeaj97h02A_DcSYKCgh',
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ ruta: location.pathname, sesion_id: sid }),
+      keepalive: true
+    }).catch(function () {});
+  } catch (e) {}
+})();
+</script>
+
 </body>
 </html>
