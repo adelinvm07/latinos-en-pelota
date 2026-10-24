@@ -4,11 +4,13 @@
   var todasLasNoticias = [];
   var categoriaActiva = "Todas";
   var textoBusqueda = "";
+  var filtroFechaActivo = "todas";
 
   // Elementos del DOM
   var contenedorTabs = document.getElementById("contenedor-tabs");
   var inputBusqueda = document.querySelector(".search-box input");
   var formBusqueda = document.querySelector(".search-box");
+  var selectFecha = document.getElementById("filtro-fecha");
   var gridNoticias = document.querySelector(".grid");
   var heroArticulo = document.querySelector("article.hero");
 
@@ -23,7 +25,6 @@
     return "futbol-red";
   }
 
-  // Enlace a la página de lectura de la noticia
   function urlNoticia(item) {
     return "noticia.html?slug=" + encodeURIComponent(item.slug);
   }
@@ -50,9 +51,9 @@
 
       if (error) throw error;
 
-      var searchBoxHtml = contenedorTabs.querySelector(".search-box").outerHTML;
+      var navControlsEl = contenedorTabs.querySelector(".nav-controls");
+      var navControlsHtml = navControlsEl ? navControlsEl.outerHTML : "";
 
-      // Construir las pestañas dinámicamente
       var htmlTabs = '<a href="#" class="active">Todas</a>';
 
       if (data && data.length > 0) {
@@ -61,11 +62,17 @@
         });
       }
 
-      contenedorTabs.innerHTML = htmlTabs + searchBoxHtml;
+      contenedorTabs.innerHTML = htmlTabs + navControlsHtml;
 
-      // Re-vincular los elementos del buscador y eventos de las nuevas pestañas
+      // Re-vincular los elementos del DOM y restaurar estado
       inputBusqueda = document.querySelector(".search-box input");
+      if (inputBusqueda) inputBusqueda.value = textoBusqueda;
+
+      selectFecha = document.getElementById("filtro-fecha");
+      if (selectFecha) selectFecha.value = filtroFechaActivo;
+
       formBusqueda = document.querySelector(".search-box");
+
       inicializarEventos();
 
     } catch (err) {
@@ -110,7 +117,8 @@
           imagen: item.imagen_url || IMAGEN_PLACEHOLDER,
           categoria: item.categorias ? item.categorias.nombre : "General",
           fecha: formatearFecha(item.publicado_en),
-         esDestacada: Boolean(item['es_destacada'])
+          rawFecha: item.publicado_en ? new Date(item.publicado_en) : null,
+          esDestacada: Boolean(item['es_destacada'])
         };
       });
 
@@ -130,17 +138,42 @@
   function aplicarFiltros() {
     if (!gridNoticias) return;
 
+    var now = new Date();
+
     var noticiasFiltradas = todasLasNoticias.filter(function (noticia) {
+      // 1. Filtro Categoría
       var coincideCategoria = (categoriaActiva === "Todas") ||
         (noticia.categoria.toLowerCase() === categoriaActiva.toLowerCase());
 
+      // 2. Filtro Búsqueda
       var term = textoBusqueda.toLowerCase();
       var coincideTexto = !term ||
         noticia.titulo.toLowerCase().includes(term) ||
         noticia.subtitulo.toLowerCase().includes(term) ||
         noticia.categoria.toLowerCase().includes(term);
 
-      return coincideCategoria && coincideTexto;
+      // 3. Filtro Fecha
+      var coincideFecha = true;
+      if (filtroFechaActivo !== "todas" && noticia.rawFecha) {
+        var pub = noticia.rawFecha;
+        var diffTime = now - pub;
+        var diffDays = diffTime / (1000 * 60 * 60 * 24);
+        var monthDiff = (now.getFullYear() - pub.getFullYear()) * 12 + (now.getMonth() - pub.getMonth());
+
+        if (filtroFechaActivo === "reciente") {
+          coincideFecha = diffDays >= 0 && diffDays <= 7;
+        } else if (filtroFechaActivo === "este_mes") {
+          coincideFecha = monthDiff === 0;
+        } else if (filtroFechaActivo === "mes_pasado") {
+          coincideFecha = monthDiff === 1;
+        } else if (filtroFechaActivo === "hace_2_meses") {
+          coincideFecha = monthDiff === 2;
+        } else if (filtroFechaActivo === "mas_2_meses") {
+          coincideFecha = monthDiff > 2;
+        }
+      }
+
+      return coincideCategoria && coincideTexto && coincideFecha;
     });
 
     renderizarResultados(noticiasFiltradas);
@@ -149,20 +182,26 @@
   function renderizarResultados(lista) {
     if (!gridNoticias) return;
 
-    var sinFiltros = categoriaActiva === "Todas" && textoBusqueda.length === 0;
+    // Se oculta la destacada si el filtro de fecha es "mes_pasado", "hace_2_meses" o "mas_2_meses"
+    var esFiltroAntiguo = ["mes_pasado", "hace_2_meses", "mas_2_meses"].indexOf(filtroFechaActivo) !== -1;
 
-    // Noticia destacada: la marcada como destacada o, si no hay, la más reciente
+    // Buscar noticia destacada
     var destacada = todasLasNoticias.find(function (n) { return n.esDestacada; }) || todasLasNoticias[0];
-    var mostrarHero = sinFiltros && !!destacada;
+    var destacadaEnLista = destacada ? lista.find(function (n) { return n.id === destacada.id; }) : null;
 
-    // Sin banner, las noticias suben a la primera fila (ver CSS main.sin-hero)
+    // El hero solo se muestra en "Todas", sin texto de búsqueda, con filtro reciente/este_mes/todas y si la destacada está en los resultados
+    var mostrarHero = (categoriaActiva === "Todas") &&
+                      (textoBusqueda.length === 0) &&
+                      !esFiltroAntiguo &&
+                      !!destacadaEnLista;
+
     var mainEl = document.querySelector("main");
     if (mainEl) mainEl.classList.toggle("sin-hero", !mostrarHero);
 
-    // 1. Banner principal (solo sin búsqueda ni filtro de categoría)
+    // 1. Mostrar o u ocultar el banner hero
     if (heroArticulo) {
       if (mostrarHero) {
-        heroArticulo.style.display = ""; // lo decide el CSS de .hero (flex)
+        heroArticulo.style.display = "";
         heroArticulo.innerHTML =
           '<div class="media">' +
             '<a href="' + urlNoticia(destacada) + '" style="display:block;height:100%">' +
@@ -180,13 +219,12 @@
       }
     }
 
-    // 2. La destacada no se repite abajo, pero solo si el banner está a la vista
+    // 2. La noticia destacada no se repite abajo si el banner está visible
     var noticiasGrid = mostrarHero
       ? lista.filter(function (item) { return item.id !== destacada.id; })
       : lista;
 
     if (noticiasGrid.length === 0) {
-      // Solo hay una noticia y ya está en el banner: la cuadrícula queda vacía
       if (mostrarHero) {
         gridNoticias.innerHTML = "";
         return;
@@ -194,7 +232,7 @@
 
       var mensaje = todasLasNoticias.length === 0
         ? "Aún no hay noticias publicadas en la base de datos."
-        : 'No hay noticias que coincidan con la búsqueda "' + escapeHtml(textoBusqueda || categoriaActiva) + '".';
+        : 'No hay noticias que coincidan con los filtros seleccionados.';
 
       gridNoticias.innerHTML =
         '<div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #fff; border-radius: 6px; border: 1px solid var(--line);">' +
@@ -204,7 +242,7 @@
       return;
     }
 
-    // 3. Cuadrícula de noticias
+    // 3. Renderizar la cuadrícula de noticias
     gridNoticias.innerHTML = noticiasGrid.map(function (item) {
       var enlace = urlNoticia(item);
       return (
@@ -236,6 +274,14 @@
     if (inputBusqueda) {
       inputBusqueda.addEventListener("input", function (e) {
         textoBusqueda = e.target.value.trim();
+        aplicarFiltros();
+      });
+    }
+
+    selectFecha = document.getElementById("filtro-fecha");
+    if (selectFecha) {
+      selectFecha.addEventListener("change", function (e) {
+        filtroFechaActivo = e.target.value;
         aplicarFiltros();
       });
     }

@@ -40,7 +40,6 @@
   }
   .brand{display:flex;align-items:center;gap:14px;}
 
-  /* --- LOGO CORREGIDO --- */
   .logo{
     width:52px;height:52px;border-radius:50%;
     background:#fff;
@@ -56,7 +55,6 @@
     object-fit:contain;
     border-radius:50%;
   }
-  /* ----------------------- */
 
   .brand h1{margin:0;font-size:22px;font-weight:700;}
   .brand p{margin:2px 0 0;font-size:13px;color:#9fb0c9;}
@@ -75,8 +73,38 @@
   }
   nav.tabs a.active{color:#fff;border-color:var(--red);}
 
+  /* Contenedor del buscador y filtro de fechas */
+  .nav-controls {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Estilos para el filtro por fecha */
+  .date-select {
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 20px;
+    padding: 7px 12px;
+    color: #fff;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .date-select option {
+    background: var(--navy2);
+    color: #fff;
+  }
+  .date-select:focus {
+    background: rgba(255, 255, 255, .14);
+    border-color: var(--yellow);
+  }
+
   .search-box{
-    margin-left:auto;
     display:flex;align-items:center;gap:8px;
     background:rgba(255,255,255,.08);
     border:1px solid rgba(255,255,255,.15);
@@ -88,14 +116,21 @@
   .search-box input{
     background:transparent;border:none;outline:none;
     color:#fff;font-size:13px;font-family:inherit;
-    width:150px;
+    width:140px;
   }
   .search-box input::placeholder{color:#8394ab;}
   .search-box:focus-within{
     background:rgba(255,255,255,.14);
     border-color:var(--yellow);
   }
-  @media (max-width:600px){
+
+  @media (max-width:768px){
+    .nav-controls{
+      margin-top: 8px;
+      margin-bottom: 8px;
+      width: 100%;
+      justify-content: space-between;
+    }
     .search-box input{width:100px;}
   }
 
@@ -201,8 +236,8 @@
   @media (max-width:880px){.grid{grid-template-columns:1fr 1fr;}}
   @media (max-width:560px){.grid{grid-template-columns:1fr;}}
 
-  /* ===== Con una categoría o búsqueda activa (sin banner) =====
-     Las noticias suben a la primera fila, junto a la barra lateral. */
+  /* ===== Cuando se oculta el banner hero =====
+     Las noticias suben a la primera fila, alineadas desde arriba. */
   main.sin-hero .grid{
     grid-column:1;
     grid-row:1;
@@ -251,15 +286,26 @@
 
 <nav class="tabs" id="contenedor-tabs">
   <a href="#" class="active">Todas</a>
-  <!-- Las categorías de Supabase se cargaran aqui dinamicamente -->
+  <!-- Las categorías de Supabase se cargarán aquí dinámicamente -->
 
-  <form class="search-box" role="search" onsubmit="return false;">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="11" cy="11" r="8"></circle>
-      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-    </svg>
-    <input type="search" placeholder="Buscar noticias..." aria-label="Buscar noticias">
-  </form>
+  <div class="nav-controls">
+    <select id="filtro-fecha" class="date-select" aria-label="Filtrar por fecha">
+      <option value="todas">Todas las fechas</option>
+      <option value="reciente">Reciente (últimos 7 días)</option>
+      <option value="este_mes">Este mes</option>
+      <option value="mes_pasado">Mes pasado</option>
+      <option value="hace_2_meses">Hace 2 meses</option>
+      <option value="mas_2_meses">Hace mucho tiempo</option>
+    </select>
+
+    <form class="search-box" role="search" onsubmit="return false;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="search" placeholder="Buscar noticias..." aria-label="Buscar noticias">
+    </form>
+  </div>
 </nav>
 
 <main>
@@ -297,59 +343,7 @@
     </div>
   </aside>
 
-  <div class="grid">
-
-    <article class="story">
-      <div class="media">
-        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/RoseGardenArenaInterior3.jpg" alt="Interior de un pabellón de baloncesto">
-      </div>
-      <span class="tag baloncesto">BALONCESTO</span>
-      <h3>Un equipo de la NBA cierra el fichaje estrella del verano con un base europeo</h3>
-      <p>La franquicia refuerza su plantilla de cara a la nueva temporada con un contrato de varios años.</p>
-      <div class="byline">Redacción · 27 ago 2026</div>
-    </article>
-
-    <article class="story">
-      <div class="media">
-        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Haiti%20national%20football%20team%20training%20in%20Port-au-Prince%202004-08-16%202.jpg" alt="Selección nacional entrenando">
-      </div>
-      <span class="tag futbol-red">FÚTBOL</span>
-      <h3>La selección convoca a tres debutantes para los próximos partidos de la Liga de Naciones</h3>
-      <p>El seleccionador apuesta por la juventud e incorpora tres nombres nuevos a la lista.</p>
-      <div class="byline">Redacción · 23 ago 2026</div>
-    </article>
-
-    <article class="story">
-      <div class="media">
-        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/London%202012%20Olympic%20100m%20final%20start.jpg" alt="Salida de una carrera de 100 metros">
-      </div>
-      <span class="tag atletismo">ATLETISMO</span>
-      <h3>Se rompe el récord mundial de los 100 metros lisos en el campeonato continental</h3>
-      <p>El velocista superó la marca que resistía desde hacía más de una década.</p>
-      <div class="byline">Redacción · 25 ago 2026</div>
-    </article>
-
-    <article class="story">
-      <div class="media">
-        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/USMC%20Marathon.jpg" alt="Corredores de maratón en carretera">
-      </div>
-      <span class="tag atletismo">ATLETISMO</span>
-      <h3>Una maratonista bate el récord nacional en una de las grandes citas del calendario</h3>
-      <p>Con un tiempo por debajo de las dos horas y veinte minutos, se convierte en la más rápida de su país.</p>
-      <div class="byline">Redacción · 24 ago 2026</div>
-    </article>
-
-    <article class="story">
-      <div class="media">
-        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Basketball%20pic.png" alt="Balón de baloncesto en cancha">
-      </div>
-      <span class="tag baloncesto">BALONCESTO</span>
-      <h3>La selección nacional cae en semifinales del torneo continental ante un rival intratable</h3>
-      <p>El equipo no pudo con el físico y la intensidad del rival en una noche de altibajos.</p>
-      <div class="byline">Redacción · 21 ago 2026</div>
-    </article>
-
-  </div>
+  <div class="grid"></div>
 
 </main>
 
@@ -360,14 +354,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 
-<!-- Script para validar rol de Administrador -->
 <script>
   document.addEventListener("DOMContentLoaded", async function () {
     const btnAdmin = document.getElementById("btnPanelAdmin");
     if (!btnAdmin || !window.supabase) return;
 
     try {
-      // 1. Obtener la sesión activa del usuario
       const { data: { session } } = await window.supabase.auth.getSession();
 
       if (!session || !session.user) {
@@ -375,21 +367,18 @@
         return;
       }
 
-      // 2. Consultar el rol en la tabla de usuarios/perfiles
-      // Nota: Si tu tabla se llama "usuarios" en lugar de "perfiles", cambia la palabra abajo.
       const { data: perfil, error } = await window.supabase
         .from("perfiles") 
         .select("rol")
         .eq("id", session.user.id)
         .maybeSingle();
 
-      // 3. Verificar si el rol obtenido es estrictamente 'admin'
       const esAdmin = perfil && (perfil.rol === "admin" || perfil.rol === "Admin");
 
       if (esAdmin) {
-        btnAdmin.style.display = "inline-block"; // Únicamente si es Admin
+        btnAdmin.style.display = "inline-block";
       } else {
-        btnAdmin.style.display = "none"; // Para cualquier otro rol (usuario/lector)
+        btnAdmin.style.display = "none";
       }
 
     } catch (err) {
@@ -399,7 +388,6 @@
   });
 </script>
 
-<!-- Script de búsqueda de noticias -->
 <script src="js/buscador.js"></script>
 
 <script>
