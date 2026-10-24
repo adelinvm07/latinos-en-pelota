@@ -15,7 +15,9 @@
     noticiasPage: 1,
     noticiasTotal: 0,
     comentariosTab: "pendiente",
-    comentariosPendientesTotal: 47,
+    comentariosQuery: "",
+    comentariosPendientesTotal: 0,
+    comentariosTotal: 0,
     editingCatId: null,
     deletingCatId: null,
     isRegisterMode: false
@@ -37,12 +39,7 @@
     "#2ecc71"
   ];
 
-  var comentarios = [
-    { id: 1, autor: "Ramón Féliz", texto: "¡Por fin una temporada donde el Licey juega en serio! Ese noveno inning fue una locura.", articulo: "El Escogido remonta en el noveno", fecha: "2026-09-03", estado: "pendiente" },
-    { id: 2, autor: "Carmen Ozuna", texto: "¿Alguien sabe si van a transmitir el partido por streaming también?", articulo: "República Dominicana estrena su roster preliminar", fecha: "2026-09-03", estado: "pendiente" },
-    { id: 3, autor: "Luis Almonte", texto: "Excelente análisis, aunque creo que le faltó mencionar el bullpen.", articulo: "Las Águilas Cibaeñas aseguran su boleto", fecha: "2026-09-02", estado: "pendiente" },
-    { id: 4, autor: "Yesenia Paulino", texto: "Ojalá el Cibao FC pueda sostener este nivel en la liguilla.", articulo: "Cibao FC se corona campeón", fecha: "2026-09-02", estado: "aprobado" }
-  ];
+  var comentarios = [];
 
   // =========================================================================
   // SISTEMA DE NOTIFICACIONES TOAST
@@ -294,6 +291,99 @@
   }
 
   // =========================================================================
+  // CONEXIÓN CON SUPABASE: COMENTARIOS (MODERACIÓN)
+  // =========================================================================
+  async function cargarComentariosDesdeSupabase() {
+    if (!window.supabase) return;
+
+    try {
+      var { data, error } = await window.supabase
+        .from("comentarios")
+        .select("id, autor, contenido, estado, creado_en, noticias(titulo)")
+        .order("creado_en", { ascending: false });
+
+      if (error) throw error;
+
+      comentarios = (data || []).map(function (c) {
+        return {
+          id: c.id,
+          autor: c.autor,
+          texto: c.contenido,
+          articulo: c.noticias && c.noticias.titulo ? c.noticias.titulo : "Noticia eliminada",
+          fecha: c.creado_en,
+          estado: c.estado
+        };
+      });
+
+      actualizarContadoresComentarios();
+      renderComentarios();
+    } catch (err) {
+      console.error("Error al cargar comentarios:", err);
+      var list = document.getElementById("comentariosList");
+      if (list) {
+        list.innerHTML = '<div class="empty-state"><p>No se pudieron cargar los comentarios. ' +
+          'Verifica que ejecutaste comentarios-setup.sql en Supabase.</p></div>';
+      }
+    }
+  }
+
+  function actualizarContadoresComentarios() {
+    state.comentariosTotal = comentarios.length;
+    state.comentariosPendientesTotal = comentarios.filter(function (c) {
+      return c.estado === "pendiente";
+    }).length;
+    updateNavBadges();
+    renderResumenStats();
+  }
+
+  async function aprobarComentario(id) {
+    try {
+      var { data, error } = await window.supabase
+        .from("comentarios")
+        .update({ estado: "aprobado" })
+        .eq("id", id)
+        .select();
+
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error("No se pudo aprobar. Verifica que tu sesión de administrador siga activa.");
+
+      showToast("Aprobado", "El comentario ya es visible en el portal.", "success");
+      await cargarComentariosDesdeSupabase();
+    } catch (err) {
+      console.error("Error al aprobar comentario:", err);
+      showToast("Error", err.message, "error");
+    }
+  }
+
+  async function eliminarComentario(id) {
+    var item = comentarios.find(function (c) { return c.id === id; });
+    if (!item) return;
+
+    var pendiente = item.estado === "pendiente";
+    var pregunta = pendiente
+      ? "¿Rechazar el comentario de " + item.autor + "? Se eliminará y no se publicará."
+      : "¿Eliminar el comentario de " + item.autor + "? Dejará de verse en el portal.";
+    if (!confirm(pregunta)) return;
+
+    try {
+      var { data, error } = await window.supabase
+        .from("comentarios")
+        .delete()
+        .eq("id", id)
+        .select();
+
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error("No se pudo eliminar. Verifica que tu sesión de administrador siga activa.");
+
+      showToast(pendiente ? "Rechazado" : "Eliminado", "Comentario eliminado correctamente.", "success");
+      await cargarComentariosDesdeSupabase();
+    } catch (err) {
+      console.error("Error al eliminar comentario:", err);
+      showToast("Error", err.message, "error");
+    }
+  }
+
+  // =========================================================================
   // GESTIÓN DE CATEGORÍAS (CRUD CON SUPABASE)
   // =========================================================================
   window.abrirModalNuevaCategoria = function () {
@@ -438,7 +528,7 @@
     var statComentarios = document.getElementById("statComentarios");
 
     if (statNoticias) statNoticias.textContent = fmt(state.noticiasTotal);
-    if (statComentarios) statComentarios.textContent = fmt(state.comentariosPendientesTotal);
+    if (statComentarios) statComentarios.textContent = fmt(state.comentariosTotal);
   }
 
   // =========================================================================
@@ -621,26 +711,48 @@
     var list = document.getElementById("comentariosList");
     if (!list) return;
 
-    var filtered = comentarios.filter(function (c) { return c.estado === state.comentariosTab; });
+    var q = state.comentariosQuery.trim().toLowerCase();
+    var pendientes = comentarios.filter(function (c) { return c.estado === "pendiente"; }).length;
+    var aprobados = comentarios.length - pendientes;
 
     document.querySelectorAll(".tab-btn").forEach(function (btn) {
+      var esPendiente = btn.dataset.tab === "pendiente";
       btn.classList.toggle("active", btn.dataset.tab === state.comentariosTab);
+      btn.textContent = (esPendiente ? "Pendientes" : "Aprobados") + " (" + (esPendiente ? pendientes : aprobados) + ")";
+    });
+
+    var filtered = comentarios.filter(function (c) {
+      if (c.estado !== state.comentariosTab) return false;
+      if (!q) return true;
+      return (c.autor || "").toLowerCase().indexOf(q) !== -1 ||
+             (c.texto || "").toLowerCase().indexOf(q) !== -1 ||
+             (c.articulo || "").toLowerCase().indexOf(q) !== -1;
     });
 
     if (filtered.length === 0) {
-      list.innerHTML = '<div class="empty-state"><p>No hay comentarios en esta pestaña.</p></div>';
+      var vacio = q ? "Ningún comentario coincide con la búsqueda."
+        : state.comentariosTab === "pendiente" ? "No hay comentarios pendientes de revisión."
+        : "Todavía no hay comentarios aprobados.";
+      list.innerHTML = '<div class="empty-state"><p>' + vacio + '</p></div>';
       return;
     }
 
     list.innerHTML = filtered.map(function (item) {
+      var acciones = item.estado === "pendiente"
+        ? '<button type="button" class="btn btn-primary btn-sm" data-aprobar-comentario="' + item.id + '">Aprobar</button>' +
+          '<button type="button" class="btn btn-danger btn-sm" data-eliminar-comentario="' + item.id + '">Rechazar</button>'
+        : '<button type="button" class="btn btn-danger btn-sm" data-eliminar-comentario="' + item.id + '">Eliminar</button>';
+
       return (
         '<div class="panel" style="margin-bottom:12px;">' +
         '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">' +
         '<strong>' + escapeHtml(item.autor) + '</strong>' +
         '<span class="meta-muted" style="font-size:12px;">' + fechaCorta(item.fecha) + '</span>' +
         '</div>' +
-        '<p style="font-size:14px;color:var(--text);margin-bottom:8px;">' + escapeHtml(item.texto) + '</p>' +
+        '<p style="font-size:14px;color:var(--text);margin-bottom:8px;overflow-wrap:anywhere;">' +
+          escapeHtml(item.texto).replace(/\n/g, "<br>") + '</p>' +
         '<div style="font-size:12px;color:var(--text-muted);">En: <i>' + escapeHtml(item.articulo) + '</i></div>' +
+        '<div style="display:flex;gap:8px;margin-top:12px;">' + acciones + '</div>' +
         '</div>'
       );
     }).join("");
@@ -716,7 +828,7 @@
     if (name === "resumen") renderResumenStats();
     if (name === "noticias") { state.noticiasQuery = ""; renderNoticias(); }
     if (name === "categorias") renderCategorias();
-    if (name === "comentarios") renderComentarios();
+    if (name === "comentarios") { state.comentariosQuery = ""; renderComentarios(); }
 
     var sidebar = document.getElementById("sidebar");
     if (sidebar) sidebar.classList.remove("open");
@@ -761,6 +873,9 @@
             var match = categorias[i].nombre.toLowerCase().indexOf(q) !== -1;
             card.style.display = q && !match ? "none" : "";
           });
+        } else if (state.section === "comentarios") {
+          state.comentariosQuery = q;
+          renderComentarios();
         }
       });
     }
@@ -811,6 +926,26 @@
       });
     }
 
+    // 7b. Comentarios: pestañas y acciones de moderación
+    document.querySelectorAll(".tab-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        state.comentariosTab = btn.dataset.tab;
+        renderComentarios();
+      });
+    });
+
+    var comList = document.getElementById("comentariosList");
+    if (comList) {
+      comList.addEventListener("click", function (e) {
+        var btn = e.target.closest("button");
+        if (!btn) return;
+        var aprobarId = btn.getAttribute("data-aprobar-comentario");
+        var eliminarId = btn.getAttribute("data-eliminar-comentario");
+        if (aprobarId) aprobarComentario(Number(aprobarId));
+        if (eliminarId) eliminarComentario(Number(eliminarId));
+      });
+    }
+
     // 8. Modal Categoría
     var formCat = document.getElementById("formCategoria");
     if (formCat) {
@@ -837,6 +972,7 @@
     if (haySesion) {
       cargarCategoriasDesdeSupabase();
       cargarNoticiasDesdeSupabase();
+      cargarComentariosDesdeSupabase();
     }
 
     // Comprobar parámetros de URL
