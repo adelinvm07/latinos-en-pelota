@@ -248,12 +248,10 @@
 
           <div class="chart-card">
             <h3>Cobertura deportiva</h3>
-            <div class="chart-sub">Distribución temática</div>
-            <div class="donut-legend">
-              <div class="donut-legend-row"><div class="donut-legend-left"><span class="dot" style="background:var(--accent)"></span>Béisbol</div><b>44%</b></div>
-              <div class="donut-legend-row"><div class="donut-legend-left"><span class="dot" style="background:var(--blue)"></span>Fútbol</div><b>26%</b></div>
-              <div class="donut-legend-row"><div class="donut-legend-left"><span class="dot" style="background:var(--gold)"></span>Boxeo</div><b>16%</b></div>
-              <div class="donut-legend-row"><div class="donut-legend-left"><span class="dot" style="background:var(--purple)"></span>Baloncesto</div><b>14%</b></div>
+            <div class="chart-sub" id="coberturaSub">Distribución temática</div>
+            <div id="coberturaBar" style="display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--border);margin-bottom:6px;"></div>
+            <div class="donut-legend" id="coberturaLegend">
+              <div class="meta-muted" style="font-size:13px;">Cargando...</div>
             </div>
             <div style="margin-top:24px;text-align:center;">
               <a href="crear-noticia.html" class="btn btn-primary" style="width:100%;">+ Redactar Noticia Ahora</a>
@@ -308,7 +306,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;background:var(--surface);padding:16px 20px;border-radius:var(--radius);border:1px solid var(--border);">
           <div>
             <h3 style="font-size:16px;font-weight:700;">Categorías del Portal</h3>
-            <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">Organiza los deportes y secciones. Puedes agregar, modificar y eliminar categorías.</p>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">Organiza los deportes y secciones. Puedes agregar, modificar y eliminar categorías con Supabase.</p>
           </div>
           <div>
             <button class="btn btn-primary btn-sm" onclick="abrirModalNuevaCategoria()">+ Nueva Categoría</button>

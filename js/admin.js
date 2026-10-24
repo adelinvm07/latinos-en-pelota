@@ -529,6 +529,88 @@
 
     if (statNoticias) statNoticias.textContent = fmt(state.noticiasTotal);
     if (statComentarios) statComentarios.textContent = fmt(state.comentariosTotal);
+
+    renderCobertura();
+  }
+
+  // =========================================================================
+  // RENDER: COBERTURA DEPORTIVA (noticias publicadas por categoría)
+  // =========================================================================
+  var MAX_COBERTURA = 5; // se muestran las 4 categorías con más noticias y el resto como "Otras"
+
+  // Método del mayor resto: los porcentajes enteros suman exactamente 100
+  function repartirPorcentajes(conteos, total) {
+    var base = conteos.map(function (c) { return Math.floor((c / total) * 100); });
+    var resto = 100 - base.reduce(function (s, x) { return s + x; }, 0);
+    conteos
+      .map(function (c, i) { return { i: i, frac: (c / total) * 100 - base[i] }; })
+      .sort(function (x, y) { return y.frac - x.frac; })
+      .slice(0, resto)
+      .forEach(function (x) { base[x.i] += 1; });
+    return base;
+  }
+
+  function colorDeCategoria(nombre, posicion) {
+    var cat = categorias.find(function (c) { return c.nombre === nombre; });
+    return cat ? cat.color : catPalette[posicion % catPalette.length];
+  }
+
+  function renderCobertura() {
+    var legend = document.getElementById("coberturaLegend");
+    var bar = document.getElementById("coberturaBar");
+    var sub = document.getElementById("coberturaSub");
+    if (!legend) return;
+
+    var publicadas = noticias.filter(function (n) {
+      return String(n.estado).toLowerCase() === "publicado";
+    });
+
+    if (publicadas.length === 0) {
+      if (bar) bar.innerHTML = "";
+      if (sub) sub.textContent = "Distribución temática";
+      legend.innerHTML = '<div class="meta-muted" style="font-size:13px;">Aún no hay noticias publicadas.</div>';
+      return;
+    }
+
+    var mapa = {};
+    publicadas.forEach(function (n) {
+      var nombre = n.categoria || "Sin categoría";
+      mapa[nombre] = (mapa[nombre] || 0) + 1;
+    });
+
+    var filas = Object.keys(mapa)
+      .map(function (nombre) { return { nombre: nombre, count: mapa[nombre] }; })
+      .sort(function (x, y) { return y.count - x.count || x.nombre.localeCompare(y.nombre, "es"); });
+
+    if (filas.length > MAX_COBERTURA) {
+      var otras = filas.slice(MAX_COBERTURA - 1).reduce(function (s, f) { return s + f.count; }, 0);
+      filas = filas.slice(0, MAX_COBERTURA - 1);
+      filas.push({ nombre: "Otras", count: otras, color: "var(--text-muted)" });
+    }
+
+    var total = publicadas.length;
+    var porcentajes = repartirPorcentajes(filas.map(function (f) { return f.count; }), total);
+
+    filas.forEach(function (f, i) {
+      f.color = f.color || colorDeCategoria(f.nombre, i);
+      f.pct = porcentajes[i];
+      f.etiqueta = f.count + (f.count === 1 ? " noticia" : " noticias");
+    });
+
+    if (sub) sub.textContent = "Distribución temática · " + total + (total === 1 ? " noticia publicada" : " noticias publicadas");
+
+    if (bar) {
+      bar.innerHTML = filas.map(function (f) {
+        return '<span title="' + escapeHtml(f.nombre) + ': ' + f.etiqueta + '" style="width:' +
+          ((f.count / total) * 100) + '%;background:' + f.color + ';"></span>';
+      }).join("");
+    }
+
+    legend.innerHTML = filas.map(function (f) {
+      return '<div class="donut-legend-row" title="' + f.etiqueta + '">' +
+        '<div class="donut-legend-left"><span class="dot" style="background:' + f.color + '"></span>' +
+        escapeHtml(f.nombre) + '</div><b>' + f.pct + '%</b></div>';
+    }).join("");
   }
 
   // =========================================================================
