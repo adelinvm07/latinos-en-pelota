@@ -110,15 +110,7 @@
     main{grid-template-columns:1fr;}
   }
 
-  .hero{
-    grid-column:1;
-    background:var(--navy);
-    border-radius:6px;
-    overflow:hidden;
-    color:#fff;
-  }
-  .hero .media{aspect-ratio:16/8;background:#000;}
-  .hero .body{padding:26px;}
+  /* ===== Etiquetas de categoría ===== */
   .tag{
     display:inline-block;font-size:12px;font-weight:800;
     padding:5px 10px;border-radius:3px;margin-bottom:14px;
@@ -129,10 +121,59 @@
   .tag.baloncesto{background:var(--blue);color:#fff;}
   .tag.atletismo{background:var(--green);color:#fff;}
 
-  .hero h2{margin:0 0 14px;font-size:28px;line-height:1.25;font-weight:700;}
-  .hero p{margin:0 0 16px;color:#c3cede;font-size:15px;line-height:1.5;max-width:60ch;}
+  /* ===== Banner principal: texto sobre la foto ===== */
+  .hero{
+    grid-column:1;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    min-height:400px;
+    background:var(--navy);
+    border-radius:6px;
+    overflow:hidden;
+    color:#fff;
+  }
+  .hero .media{
+    position:absolute;
+    inset:0;
+    background:#000;
+  }
+  .hero .media::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:linear-gradient(to top,
+      rgba(15,26,46,.95) 0%,
+      rgba(15,26,46,.70) 35%,
+      rgba(15,26,46,0) 70%);
+  }
+  .hero .body{
+    position:relative;
+    max-width:720px;
+    padding:28px 30px 30px;
+  }
+  .hero h2{
+    margin:0 0 10px;
+    font-size:32px;
+    line-height:1.2;
+    font-weight:700;
+    text-shadow:0 1px 8px rgba(0,0,0,.4);
+  }
+  .hero p{margin:0 0 12px;color:#dbe3f0;font-size:16px;line-height:1.5;}
   .byline{color:#8394ab;font-size:13px;}
+  .hero .byline{color:#aab7cb;}
 
+  @media (max-width:880px){
+    .hero{min-height:360px;}
+  }
+  @media (max-width:560px){
+    .hero h2{font-size:24px;}
+    .hero .body{padding:22px 20px;}
+  }
+
+  /* ===== Barra lateral y anuncios ===== */
   .sidebar{grid-column:2;display:flex;flex-direction:column;gap:20px;}
   @media (max-width:880px){.sidebar{grid-column:1;}}
 
@@ -140,8 +181,8 @@
     background:#fff;border:1px solid var(--line);border-radius:6px;
     overflow:hidden;
   }
-  .ad-card .media{aspect-ratio:16/10;}
-  .ad-card .body{padding:16px;}
+  .ad-card .media{aspect-ratio:16/7;}
+  .ad-card .body{padding:14px 16px 16px;}
   .ad-label{font-size:11px;letter-spacing:.4px;color:var(--muted);font-weight:700;margin-bottom:8px;}
   .ad-card h3{margin:0 0 6px;font-size:16px;}
   .ad-card p{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.5;}
@@ -151,6 +192,7 @@
   }
   .btn.dark{background:var(--navy);}
 
+  /* ===== Cuadrícula de noticias ===== */
   .grid{
     grid-column:1/-1;
     display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
@@ -172,8 +214,6 @@
   }
   footer a{color:#c3cede;text-decoration:underline;}
 </style>
-</head>
-<body>
 
 <header class="site">
   <div class="brand">
