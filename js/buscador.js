@@ -5,7 +5,6 @@
   var todasLasNoticias = [];
   var categoriaActiva = "Todas";
   var textoBusqueda = "";
-  var hayHero = false; // true cuando el banner principal tiene una noticia
 
   // Elementos del DOM
   var contenedorTabs = document.getElementById("contenedor-tabs");
@@ -23,33 +22,6 @@
     if (catLower.includes("baloncesto") || catLower.includes("basket")) return "baloncesto";
     if (catLower.includes("atletismo")) return "atletismo";
     return "futbol-red";
-  }
-
-  function urlNoticia(item) {
-    return "noticia.html?slug=" + encodeURIComponent(item.slug);
-  }
-
-  // Banner principal: la noticia publicada más reciente
-  function pintarHero() {
-    if (!heroArticulo) return;
-    var n = todasLasNoticias[0];
-    hayHero = !!n;
-    if (!n) {
-      heroArticulo.style.display = "none";
-      return;
-    }
-    heroArticulo.innerHTML =
-      '<div class="media">' +
-        '<a href="' + urlNoticia(n) + '" style="display:block;height:100%">' +
-          '<img src="' + escapeHtml(n.imagen) + '" alt="' + escapeHtml(n.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
-        '</a>' +
-      '</div>' +
-      '<div class="body">' +
-        '<span class="tag ' + obtenerClaseTag(n.categoria) + '">' + escapeHtml(n.categoria.toUpperCase()) + '</span>' +
-        '<h2><a href="' + urlNoticia(n) + '">' + escapeHtml(n.titulo) + '</a></h2>' +
-        (n.subtitulo ? '<p>' + escapeHtml(n.subtitulo) + '</p>' : '') +
-        '<div class="byline">Redacción · ' + n.fecha + '</div>' +
-      '</div>';
   }
 
   function formatearFecha(isoString) {
@@ -119,7 +91,7 @@
     try {
       var { data, error } = await window.supabase
         .from("noticias")
-        .select("id, slug, titulo, subtitulo, imagen_url, estado, publicado_en, categorias(id, nombre)")
+        .select("id, titulo, subtitulo, imagen_url, estado, publicado_en, es_destacada, categorias(id, nombre)")
         .eq("estado", "publicado")
         .order("publicado_en", { ascending: false });
 
@@ -128,21 +100,19 @@
       todasLasNoticias = (data || []).map(function (item) {
         return {
           id: item.id,
-          slug: item.slug,
           titulo: item.titulo || "Sin título",
           subtitulo: item.subtitulo || "",
           imagen: item.imagen_url || IMAGEN_PLACEHOLDER,
           categoria: item.categorias ? item.categorias.nombre : "General",
-          fecha: formatearFecha(item.publicado_en)
+          fecha: formatearFecha(item.publicado_en),
+         esDestacada: Boolean(item['es_destacada'])
         };
       });
 
-      pintarHero();
       aplicarFiltros();
 
     } catch (err) {
       console.error("Error cargando noticias desde Supabase:", err);
-      if (heroArticulo) heroArticulo.style.display = "none";
       if (gridNoticias) {
         gridNoticias.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--red); padding: 40px 0;">Error al conectar con la base de datos.</p>';
       }
@@ -168,59 +138,70 @@
       return coincideCategoria && coincideTexto;
     });
 
-    // El banner ya muestra la noticia más reciente: no se repite en la cuadrícula
-    if (categoriaActiva === "Todas" && textoBusqueda.length === 0 && hayHero) {
-      noticiasFiltradas = noticiasFiltradas.slice(1);
-    }
-
     renderizarResultados(noticiasFiltradas);
   }
 
   function renderizarResultados(lista) {
     if (!gridNoticias) return;
 
-    if (heroArticulo) {
-      if (!hayHero || categoriaActiva !== "Todas" || textoBusqueda.length > 0) {
-        heroArticulo.style.display = "none";
-      } else {
-        heroArticulo.style.display = "block";
-      }
-    }
+    // Buscar la noticia destacada (o tomar la primera de la lista si no hay ninguna marcada)
+  var destacada = todasLasNoticias.find(function (n) { return n.esDestacada; }) || todasLasNoticias[0];
 
-    if (lista.length === 0) {
-      // Solo hay una noticia y ya está en el banner: la cuadrícula queda vacía
-      if (hayHero && categoriaActiva === "Todas" && textoBusqueda.length === 0) {
-        gridNoticias.innerHTML = "";
-        return;
-      }
+  if (heroArticulo) {
+    // Ocultar hero si hay búsqueda activa o filtro por categoría
+    if (categoriaActiva !== "Todas" || textoBusqueda.length > 0) {
+      heroArticulo.style.display = "none";
+    } else if (destacada) {
+      heroArticulo.style.display = "block";
+      var claseTag = obtenerClaseTag(destacada.categoria);
 
-      var mensaje = todasLasNoticias.length === 0
-        ? "Aún no hay noticias publicadas en la base de datos."
-        : 'No hay noticias que coincidan con la búsqueda "' + (textoBusqueda || categoriaActiva) + '".';
-
-      gridNoticias.innerHTML = 
-        '<div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #fff; border-radius: 6px; border: 1px solid var(--line);">' +
-          '<h3 style="margin: 0 0 8px; font-size: 18px; color: var(--navy);">Sin resultados</h3>' +
-          '<p style="margin: 0; font-size: 14px; color: var(--muted);">' + mensaje + '</p>' +
+      heroArticulo.innerHTML = 
+        '<div class="media">' +
+          '<img src="' + destacada.imagen + '" alt="' + destacada.titulo + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
+        '</div>' +
+        '<div class="body">' +
+          '<span class="tag ' + claseTag + '">' + destacada.categoria.toUpperCase() + '</span>' +
+          '<h2><a href="#" style="color:#fff;">' + destacada.titulo + '</a></h2>' +
+          '<p>' + destacada.subtitulo + '</p>' +
+          '<div class="byline">Redacción · ' + destacada.fecha + '</div>' +
         '</div>';
-      return;
+    } else {
+      heroArticulo.style.display = "none";
     }
+  }
 
-    gridNoticias.innerHTML = lista.map(function (item) {
-      var claseTag = obtenerClaseTag(item.categoria);
-      var enlace = urlNoticia(item);
-      return (
-        '<article class="story">' +
-          '<div class="media">' +
-            '<a href="' + enlace + '" style="display:block;height:100%"><img src="' + escapeHtml(item.imagen) + '" alt="' + escapeHtml(item.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'"></a>' +
-          '</div>' +
-          '<span class="tag ' + claseTag + '">' + escapeHtml(item.categoria.toUpperCase()) + '</span>' +
-          '<h3><a href="' + enlace + '">' + escapeHtml(item.titulo) + '</a></h3>' +
-          '<p>' + escapeHtml(item.subtitulo) + '</p>' +
-          '<div class="byline">Redacción · ' + item.fecha + '</div>' +
-        '</article>'
-      );
-    }).join("");
+  // 2. Filtrar para que la destacada no se repita en la lista inferior
+  var noticiasGrid = lista.filter(function (item) {
+    return !destacada || item.id !== destacada.id;
+  });
+
+  if (noticiasGrid.length === 0) {
+    var mensaje = todasLasNoticias.length === 0
+      ? "Aún no hay noticias publicadas en la base de datos."
+      : 'No hay más noticias que coincidan con la búsqueda "' + (textoBusqueda || categoriaActiva) + '".';
+
+    gridNoticias.innerHTML = 
+      '<div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #fff; border-radius: 6px; border: 1px solid var(--line);">' +
+        '<h3 style="margin: 0 0 8px; font-size: 18px; color: var(--navy);">Sin resultados</h3>' +
+        '<p style="margin: 0; font-size: 14px; color: var(--muted);">' + mensaje + '</p>' +
+      '</div>';
+    return;
+  }
+
+  gridNoticias.innerHTML = noticiasGrid.map(function (item) {
+    var claseTag = obtenerClaseTag(item.categoria);
+    return (
+      '<article class="story">' +
+        '<div class="media">' +
+          '<img src="' + item.imagen + '" alt="' + item.titulo + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
+        '</div>' +
+        '<span class="tag ' + claseTag + '">' + item.categoria.toUpperCase() + '</span>' +
+        '<h3><a href="#">' + item.titulo + '</a></h3>' +
+        '<p>' + item.subtitulo + '</p>' +
+        '<div class="byline">Redacción · ' + item.fecha + '</div>' +
+      '</article>'
+    );
+  }).join("");
   }
 
   // =========================================================================
@@ -268,3 +249,4 @@
   });
 
 })();
+
