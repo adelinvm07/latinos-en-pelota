@@ -201,6 +201,24 @@
   @media (max-width:880px){.grid{grid-template-columns:1fr 1fr;}}
   @media (max-width:560px){.grid{grid-template-columns:1fr;}}
 
+  /* ===== Con una categoría o búsqueda activa (sin banner) =====
+     Las noticias suben a la primera fila, junto a la barra lateral. */
+  main.sin-hero .grid{
+    grid-column:1;
+    grid-row:1;
+    margin-top:0;
+    align-self:start;
+    grid-template-columns:repeat(2,1fr);
+  }
+  main.sin-hero .sidebar{grid-row:1;}
+  @media (max-width:880px){
+    main.sin-hero .grid{grid-row:auto;order:-1;}
+    main.sin-hero .sidebar{grid-row:auto;}
+  }
+  @media (max-width:560px){
+    main.sin-hero .grid{grid-template-columns:1fr;}
+  }
+
   article.story{display:flex;flex-direction:column;}
   article.story .media{aspect-ratio:4/3;border-radius:4px;overflow:hidden;background:#dde1e7;}
   article.story .tag{margin-top:14px;}

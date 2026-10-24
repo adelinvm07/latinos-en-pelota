@@ -155,6 +155,10 @@
     var destacada = todasLasNoticias.find(function (n) { return n.esDestacada; }) || todasLasNoticias[0];
     var mostrarHero = sinFiltros && !!destacada;
 
+    // Sin banner, las noticias suben a la primera fila (ver CSS main.sin-hero)
+    var mainEl = document.querySelector("main");
+    if (mainEl) mainEl.classList.toggle("sin-hero", !mostrarHero);
+
     // 1. Banner principal (solo sin búsqueda ni filtro de categoría)
     if (heroArticulo) {
       if (mostrarHero) {
