@@ -16,16 +16,17 @@
     noticiasTotal: 0,
     comentariosTab: "pendiente",
     comentariosQuery: "",
-    comentariosPendientesTotal: 0,
-    comentariosTotal: 0,
+    comentariosPendientesTotal: 47,
     editingCatId: null,
     deletingCatId: null,
+    editingAnuncioId: null,
     isRegisterMode: false
   };
 
   var PAGE_SIZE = 8;
   var categorias = [];
   var noticias = [];
+  var anuncios = [];
 
   // Paleta de colores para las tarjetas de categorías
   var catPalette = [
@@ -39,7 +40,12 @@
     "#2ecc71"
   ];
 
-  var comentarios = [];
+  var comentarios = [
+    { id: 1, autor: "Ramón Féliz", texto: "¡Por fin una temporada donde el Licey juega en serio! Ese noveno inning fue una locura.", articulo: "El Escogido remonta en el noveno", fecha: "2026-09-03", estado: "pendiente" },
+    { id: 2, autor: "Carmen Ozuna", texto: "¿Alguien sabe si van a transmitir el partido por streaming también?", articulo: "República Dominicana estrena su roster preliminar", fecha: "2026-09-03", estado: "pendiente" },
+    { id: 3, autor: "Luis Almonte", texto: "Excelente análisis, aunque creo que le faltó mencionar el bullpen.", articulo: "Las Águilas Cibaeñas aseguran su boleto", fecha: "2026-09-02", estado: "pendiente" },
+    { id: 4, autor: "Yesenia Paulino", texto: "Ojalá el Cibao FC pueda sostener este nivel en la liguilla.", articulo: "Cibao FC se corona campeón", fecha: "2026-09-02", estado: "aprobado" }
+  ];
 
   // =========================================================================
   // SISTEMA DE NOTIFICACIONES TOAST
@@ -107,31 +113,45 @@
 
   // =========================================================================
   // AUTENTICACIÓN Y CONTROL DE ACCESO
+  // NOTA: Esto es control de interfaz. La seguridad real y definitiva
+  // la garantiza el RLS de Supabase en la base de datos.
   // =========================================================================
- async function verificarSesion() {
-  if (!window.supabase) return false;
+  async function verificarSesion() {
+    if (!window.supabase) return false;
 
-  try {
-    var { data, error } = await window.supabase.auth.getSession();
-    if (error) throw error;
+    try {
+      var { data, error } = await window.supabase.auth.getSession();
+      if (error) throw error;
 
-    var loginScreen = document.getElementById("adminLoginScreen");
-    var btnAdminPublico = document.getElementById("btnPanelAdmin");
-    var session = data ? data.session : null;
+      var loginScreen = document.getElementById("adminLoginScreen");
+      var appContainer = document.getElementById("adminAppContainer");
+      var btnAdminPublico = document.getElementById("btnPanelAdmin");
+      var session = data ? data.session : null;
 
-    if (!session) {
-      // Si no hay sesión: ocultar el botón en la página principal
-      if (btnAdminPublico) btnAdminPublico.style.display = "none";
-      if (loginScreen) loginScreen.style.display = "flex";
-      return false;
-    } else {
-      // Si hay sesión: mostrar el botón en la página principal
-      if (btnAdminPublico) btnAdminPublico.style.display = "inline-block";
-      if (loginScreen) loginScreen.style.display = "none";
+      if (!session) {
+        if (btnAdminPublico) btnAdminPublico.style.display = "none";
+        if (appContainer) appContainer.style.display = "none";
+        if (loginScreen) loginScreen.style.display = "flex";
+        return false;
+      }
 
       var user = session.user;
+      var esAdmin = user && user.app_metadata && user.app_metadata.role === "admin";
+
+      if (!esAdmin) {
+        // Si no posee rol admin, redirigir al portal público antes de renderizar nada
+        if (btnAdminPublico) btnAdminPublico.style.display = "none";
+        window.location.replace("latinos-en-pelota.html");
+        return false;
+      }
+
+      // Usuario autenticado como administrador
+      if (btnAdminPublico) btnAdminPublico.style.display = "inline-block";
+      if (loginScreen) loginScreen.style.display = "none";
+      if (appContainer) appContainer.style.display = "";
+
       var email = user.email || "";
-      var userName = email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "Usuario";
+      var userName = email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "Administrador";
 
       var nameEl = document.getElementById("userNameDisplay");
       var emailEl = document.getElementById("userEmailDisplay");
@@ -139,15 +159,15 @@
 
       if (nameEl) nameEl.textContent = userName;
       if (emailEl) emailEl.textContent = email;
-      if (avatarEl) avatarEl.textContent = email ? email.slice(0, 2).toUpperCase() : "--";
+      if (avatarEl) avatarEl.textContent = email ? email.slice(0, 2).toUpperCase() : "AD";
 
       return true;
+    } catch (err) {
+      console.warn("Error al verificar sesión:", err);
+      return false;
     }
-  } catch (err) {
-    console.warn("Error al verificar sesión:", err);
-    return false;
   }
-}
+
   function configurarLogin() {
     var form = document.getElementById("adminLoginForm");
     var emailInput = document.getElementById("loginEmail");
@@ -175,13 +195,21 @@
 
           if (loginError) throw loginError;
 
+          var user = loginData && loginData.user;
+          var esAdmin = user && user.app_metadata && user.app_metadata.role === "admin";
+
+          if (!esAdmin) {
+            await window.supabase.auth.signOut();
+            throw new Error("Acceso denegado: tu cuenta no posee privilegios de administrador.");
+          }
+
           showToast("Acceso Concedido", "Sesión iniciada correctamente.", "success");
           await verificarSesion();
           await cargarCategoriasDesdeSupabase();
           await cargarNoticiasDesdeSupabase();
         } catch (err) {
           console.error("Error de autenticación:", err);
-          var msg = "Correo o contraseña incorrectos. Solo el personal autorizado puede acceder.";
+          var msg = err.message || "Correo o contraseña incorrectos. Solo el personal autorizado puede acceder.";
           errorEl.textContent = msg;
           errorEl.style.display = "block";
           errorEl.style.color = "var(--danger)";
@@ -287,99 +315,6 @@
       renderResumenStats();
     } catch (err) {
       console.error("Error al cargar noticias:", err);
-    }
-  }
-
-  // =========================================================================
-  // CONEXIÓN CON SUPABASE: COMENTARIOS (MODERACIÓN)
-  // =========================================================================
-  async function cargarComentariosDesdeSupabase() {
-    if (!window.supabase) return;
-
-    try {
-      var { data, error } = await window.supabase
-        .from("comentarios")
-        .select("id, autor, contenido, estado, creado_en, noticias(titulo)")
-        .order("creado_en", { ascending: false });
-
-      if (error) throw error;
-
-      comentarios = (data || []).map(function (c) {
-        return {
-          id: c.id,
-          autor: c.autor,
-          texto: c.contenido,
-          articulo: c.noticias && c.noticias.titulo ? c.noticias.titulo : "Noticia eliminada",
-          fecha: c.creado_en,
-          estado: c.estado
-        };
-      });
-
-      actualizarContadoresComentarios();
-      renderComentarios();
-    } catch (err) {
-      console.error("Error al cargar comentarios:", err);
-      var list = document.getElementById("comentariosList");
-      if (list) {
-        list.innerHTML = '<div class="empty-state"><p>No se pudieron cargar los comentarios. ' +
-          'Verifica que ejecutaste comentarios-setup.sql en Supabase.</p></div>';
-      }
-    }
-  }
-
-  function actualizarContadoresComentarios() {
-    state.comentariosTotal = comentarios.length;
-    state.comentariosPendientesTotal = comentarios.filter(function (c) {
-      return c.estado === "pendiente";
-    }).length;
-    updateNavBadges();
-    renderResumenStats();
-  }
-
-  async function aprobarComentario(id) {
-    try {
-      var { data, error } = await window.supabase
-        .from("comentarios")
-        .update({ estado: "aprobado" })
-        .eq("id", id)
-        .select();
-
-      if (error) throw error;
-      if (!data || data.length === 0) throw new Error("No se pudo aprobar. Verifica que tu sesión de administrador siga activa.");
-
-      showToast("Aprobado", "El comentario ya es visible en el portal.", "success");
-      await cargarComentariosDesdeSupabase();
-    } catch (err) {
-      console.error("Error al aprobar comentario:", err);
-      showToast("Error", err.message, "error");
-    }
-  }
-
-  async function eliminarComentario(id) {
-    var item = comentarios.find(function (c) { return c.id === id; });
-    if (!item) return;
-
-    var pendiente = item.estado === "pendiente";
-    var pregunta = pendiente
-      ? "¿Rechazar el comentario de " + item.autor + "? Se eliminará y no se publicará."
-      : "¿Eliminar el comentario de " + item.autor + "? Dejará de verse en el portal.";
-    if (!confirm(pregunta)) return;
-
-    try {
-      var { data, error } = await window.supabase
-        .from("comentarios")
-        .delete()
-        .eq("id", id)
-        .select();
-
-      if (error) throw error;
-      if (!data || data.length === 0) throw new Error("No se pudo eliminar. Verifica que tu sesión de administrador siga activa.");
-
-      showToast(pendiente ? "Rechazado" : "Eliminado", "Comentario eliminado correctamente.", "success");
-      await cargarComentariosDesdeSupabase();
-    } catch (err) {
-      console.error("Error al eliminar comentario:", err);
-      showToast("Error", err.message, "error");
     }
   }
 
@@ -528,13 +463,11 @@
     var statComentarios = document.getElementById("statComentarios");
 
     if (statNoticias) statNoticias.textContent = fmt(state.noticiasTotal);
-    if (statComentarios) statComentarios.textContent = fmt(state.comentariosTotal);
-
-    renderCobertura();
+    if (statComentarios) statComentarios.textContent = fmt(state.comentariosPendientesTotal);
   }
 
   // =========================================================================
-  // RENDER: COBERTURA DEPORTIVA (noticias publicadas por categoría)
+  // RENDER: CATEGORÍAS
   // =========================================================================
   var MAX_COBERTURA = 5; // se muestran las 4 categorías con más noticias y el resto como "Otras"
 
@@ -616,6 +549,7 @@
   // =========================================================================
   // RENDER: CATEGORÍAS
   // =========================================================================
+
   function renderCategorias() {
     var grid = document.getElementById("categoriasGrid");
     if (!grid) return;
@@ -691,7 +625,7 @@
 
     if (pageItems.length === 0) {
       body.innerHTML =
-        '<tr><td colspan="7"><div class="empty-state">' +
+        '<tr><td colspan="6"><div class="empty-state">' +
         '<div class="empty-state-icon">📰</div>' +
         '<h3>No se encontraron noticias</h3>' +
         '<p>' + (noticias.length === 0 ? "Aún no hay noticias creadas en la base de datos." : "No hay noticias que coincidan con el filtro actual.") + '</p>' +
@@ -709,12 +643,12 @@
   (item.subtitulo ? '<div style="font-size:12.5px;color:var(--text-muted);margin-top:3px;line-height:1.3;">' + escapeHtml(item.subtitulo) + '</div>' : '') +
           '</td>' +
           '<td><span class="pill pill--accent">' + escapeHtml(item.categoria) + '</span></td>' +
-          '<td>Redacción</td>' +
           '<td><span class="pill ' + pillClass + '">' + escapeHtml(item.estado) + '</span></td>' +
           '<td class="meta-muted">—</td>' +
           '<td class="meta-muted">' + fechaCorta(item.fecha) + '</td>' +
           '<td>' +
-          '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+          '<div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;">' +
+          '<a href="crear-noticia.html?id=' + item.id + '" class="btn-text">Editar</a>' +
           '<button class="btn-text" data-toggle-noticia="' + item.id + '">' + toggleLabel + '</button>' +
           '<button class="btn-text danger" data-delete-noticia="' + item.id + '">Eliminar</button>' +
           '</div>' +
@@ -787,58 +721,93 @@
   }
 
   // =========================================================================
-  // RENDER: COMENTARIOS
+  // GESTIÓN Y RENDER: COMENTARIOS
   // =========================================================================
+  async function cargarComentariosDesdeSupabase() {
+    if (!window.supabase) return;
+    try {
+      var { data, error } = await window.supabase
+        .from("comentarios")
+        .select("*, noticias(titulo)");
+      if (error) throw error;
+
+      comentarios = (data || []).map(function (c) {
+        return {
+          id: c.id,
+          autor: c.autor,
+          texto: c.contenido,
+          articulo: (c.noticias && c.noticias.titulo) ? c.noticias.titulo : "Noticia #" + c.noticia_id,
+          fecha: c.created_at || c.creado_en || "",
+          estado: c.estado || "aprobado"
+        };
+      });
+      comentarios.sort(function (a, b) { return new Date(b.fecha || 0) - new Date(a.fecha || 0); });
+      state.comentariosPendientesTotal = comentarios.filter(function (c) { return c.estado === "pendiente"; }).length;
+      updateNavBadges();
+      renderResumenStats();
+      renderComentarios();
+    } catch (err) {
+      console.warn("Error al cargar comentarios en panel:", err);
+    }
+  }
+
+  async function aprobarComentario(id) {
+    try {
+      var { error } = await window.supabase.from("comentarios").update({ estado: "aprobado" }).eq("id", id);
+      if (error) throw error;
+      showToast("Aprobado", "El comentario ya es visible en el portal.", "success");
+      await cargarComentariosDesdeSupabase();
+    } catch (err) {
+      showToast("Error", err.message || "No se pudo aprobar el comentario.", "error");
+    }
+  }
+
+  window.eliminarComentarioAdmin = async function (id) {
+    if (!confirm("¿Deseas eliminar este comentario?")) return;
+    try {
+      var { error } = await window.supabase
+        .from("comentarios")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      showToast("Eliminado", "Comentario eliminado correctamente.", "success");
+      await cargarComentariosDesdeSupabase();
+    } catch (e) {
+      showToast("Error", e.message || "No se pudo eliminar el comentario.", "error");
+    }
+  };
+
   function renderComentarios() {
     var list = document.getElementById("comentariosList");
     if (!list) return;
-
-    var q = state.comentariosQuery.trim().toLowerCase();
+    var query = state.comentariosQuery.trim().toLowerCase();
     var pendientes = comentarios.filter(function (c) { return c.estado === "pendiente"; }).length;
     var aprobados = comentarios.length - pendientes;
-
     document.querySelectorAll(".tab-btn").forEach(function (btn) {
-      var esPendiente = btn.dataset.tab === "pendiente";
-      btn.classList.toggle("active", btn.dataset.tab === state.comentariosTab);
-      btn.textContent = (esPendiente ? "Pendientes" : "Aprobados") + " (" + (esPendiente ? pendientes : aprobados) + ")";
+      var tab = btn.dataset.tab;
+      btn.classList.toggle("active", tab === state.comentariosTab);
+      btn.textContent = (tab === "pendiente" ? "Pendientes" : "Aprobados") + " (" + (tab === "pendiente" ? pendientes : aprobados) + ")";
     });
-
-    var filtered = comentarios.filter(function (c) {
+    var filtrados = comentarios.filter(function (c) {
       if (c.estado !== state.comentariosTab) return false;
-      if (!q) return true;
-      return (c.autor || "").toLowerCase().indexOf(q) !== -1 ||
-             (c.texto || "").toLowerCase().indexOf(q) !== -1 ||
-             (c.articulo || "").toLowerCase().indexOf(q) !== -1;
+      return !query || [c.autor, c.texto, c.articulo].some(function (v) { return (v || "").toLowerCase().indexOf(query) !== -1; });
     });
-
-    if (filtered.length === 0) {
-      var vacio = q ? "Ningún comentario coincide con la búsqueda."
-        : state.comentariosTab === "pendiente" ? "No hay comentarios pendientes de revisión."
-        : "Todavía no hay comentarios aprobados.";
-      list.innerHTML = '<div class="empty-state"><p>' + vacio + '</p></div>';
+    if (!filtrados.length) {
+      var mensaje = query ? "Ningún comentario coincide con la búsqueda." : comentarios.length ? "Todavía no hay comentarios " + (state.comentariosTab === "pendiente" ? "pendientes." : "aprobados.") : "No hay comentarios registrados en la base de datos.";
+      list.innerHTML = '<div class="empty-state"><p>' + mensaje + '</p></div>';
       return;
     }
-
-    list.innerHTML = filtered.map(function (item) {
+    list.innerHTML = filtrados.map(function (item) {
       var acciones = item.estado === "pendiente"
-        ? '<button type="button" class="btn btn-primary btn-sm" data-aprobar-comentario="' + item.id + '">Aprobar</button>' +
-          '<button type="button" class="btn btn-danger btn-sm" data-eliminar-comentario="' + item.id + '">Rechazar</button>'
-        : '<button type="button" class="btn btn-danger btn-sm" data-eliminar-comentario="' + item.id + '">Eliminar</button>';
-
-      return (
-        '<div class="panel" style="margin-bottom:12px;">' +
-        '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">' +
-        '<strong>' + escapeHtml(item.autor) + '</strong>' +
-        '<span class="meta-muted" style="font-size:12px;">' + fechaCorta(item.fecha) + '</span>' +
-        '</div>' +
-        '<p style="font-size:14px;color:var(--text);margin-bottom:8px;overflow-wrap:anywhere;">' +
-          escapeHtml(item.texto).replace(/\n/g, "<br>") + '</p>' +
-        '<div style="font-size:12px;color:var(--text-muted);">En: <i>' + escapeHtml(item.articulo) + '</i></div>' +
-        '<div style="display:flex;gap:8px;margin-top:12px;">' + acciones + '</div>' +
-        '</div>'
-      );
+        ? '<button class="btn btn-primary btn-sm" onclick="aprobarComentarioAdmin(' + item.id + ')">Aprobar</button> <button class="btn btn-danger btn-sm" onclick="eliminarComentarioAdmin(' + item.id + ')">Rechazar</button>'
+        : '<button class="btn btn-danger btn-sm" onclick="eliminarComentarioAdmin(' + item.id + ')">Eliminar</button>';
+      return '<div class="panel" style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><strong>' + escapeHtml(item.autor) + '</strong><span class="meta-muted" style="font-size:12px;">' + fechaCorta(item.fecha) + '</span></div><p style="font-size:14px;color:var(--text);margin-bottom:8px;overflow-wrap:anywhere;">' + escapeHtml(item.texto).replace(/\n/g, "<br>") + '</p><div style="font-size:12px;color:var(--text-muted);">En: <i>' + escapeHtml(item.articulo) + '</i></div><div style="display:flex;gap:8px;margin-top:12px;">' + acciones + '</div></div>';
     }).join("");
   }
+
+  window.aprobarComentarioAdmin = aprobarComentario;
 
   // =========================================================================
   // NAV BADGES & SECCIÓN
@@ -847,10 +816,12 @@
     var bNoti = document.getElementById("badgeNoticias");
     var bCat = document.getElementById("badgeCategorias");
     var bCom = document.getElementById("badgeComentarios");
+    var bAnun = document.getElementById("badgeAnuncios");
 
     if (bNoti) bNoti.textContent = fmt(state.noticiasTotal);
     if (bCat) bCat.textContent = fmt(categorias.length);
     if (bCom) bCom.textContent = fmt(state.comentariosPendientesTotal);
+    if (bAnun) bAnun.textContent = fmt(anuncios.length);
   }
 
   var sectionMeta = {
@@ -858,6 +829,7 @@
     noticias: { title: "Gestión de Noticias", subtitle: "Publicaciones", search: "Buscar noticia por título...", action: "Nueva noticia" },
     categorias: { title: "Gestión de Categorías", subtitle: "Organiza las secciones deportivas", search: "Buscar categoría...", action: "Nueva categoría" },
     comentarios: { title: "Comentarios", subtitle: "Moderación de comentarios", search: "Buscar comentario...", action: null },
+    anuncios: { title: "Gestión de Publicidad", subtitle: "Banners y espacios patrocinados", search: "Buscar anuncio...", action: "Nuevo anuncio" },
     trafico: { title: "Tráfico del sitio", subtitle: "Estadísticas y analítica", search: "Buscar...", action: null }
   };
 
@@ -881,6 +853,7 @@
       pageSub.textContent =
         name === "noticias" ? fmt(state.noticiasTotal) + " noticias en base de datos" :
         name === "categorias" ? fmt(categorias.length) + " categorías activas" :
+        name === "anuncios" ? fmt(anuncios.length) + " anuncios configurados" :
         meta.subtitle;
     }
     if (searchInput) {
@@ -897,6 +870,14 @@
           e.preventDefault();
           window.abrirModalNuevaCategoria();
         };
+      } else if (name === "anuncios") {
+        actionBtn.style.display = "inline-flex";
+        actionBtn.textContent = "+ Nuevo anuncio";
+        actionBtn.removeAttribute("href");
+        actionBtn.onclick = function (e) {
+          e.preventDefault();
+          window.abrirModalNuevoAnuncio();
+        };
       } else if (name === "noticias" || name === "resumen") {
         actionBtn.style.display = "inline-flex";
         actionBtn.textContent = "+ Nueva noticia";
@@ -907,14 +888,198 @@
       }
     }
 
-    if (name === "resumen") renderResumenStats();
+    if (name === "resumen") { renderResumenStats(); renderCobertura(); }
     if (name === "noticias") { state.noticiasQuery = ""; renderNoticias(); }
     if (name === "categorias") renderCategorias();
     if (name === "comentarios") { state.comentariosQuery = ""; renderComentarios(); }
+    if (name === "anuncios") renderAnuncios();
 
     var sidebar = document.getElementById("sidebar");
     if (sidebar) sidebar.classList.remove("open");
   }
+
+  // =========================================================================
+  // GESTIÓN DE ANUNCIOS (PUBLICIDAD)
+  // =========================================================================
+  async function cargarAnunciosDesdeSupabase() {
+    if (!window.supabase) return;
+    try {
+      var { data, error } = await window.supabase
+        .from("anuncios")
+        .select("*")
+        .order("id", { ascending: true });
+
+      if (error) throw error;
+      anuncios = data || [];
+      updateNavBadges();
+      renderAnuncios();
+    } catch (err) {
+      console.error("Error al cargar anuncios:", err);
+    }
+  }
+
+  function renderAnuncios() {
+    var body = document.getElementById("anunciosBody");
+    if (!body) return;
+
+    if (anuncios.length === 0) {
+      body.innerHTML =
+        '<tr><td colspan="6"><div class="empty-state">' +
+        '<div class="empty-state-icon">📢</div>' +
+        '<h3>No hay anuncios registrados</h3>' +
+        '<p>Crea tu primer anuncio para monetizar el portal de noticias.</p>' +
+        '<button class="btn btn-primary" onclick="abrirModalNuevoAnuncio()" style="margin-top:10px;">+ Nuevo Anuncio</button>' +
+        '</div></td></tr>';
+      return;
+    }
+
+    body.innerHTML = anuncios.map(function (ad) {
+      var estadoBadge = ad.activo
+        ? '<span class="pill pill--success">Activo</span>'
+        : '<span class="pill pill--muted">Inactivo</span>';
+      var toggleLabel = ad.activo ? "Pausar" : "Activar";
+
+      return "<tr>" +
+        '<td style="width:70px;"><img src="' + escapeHtml(ad.imagen_url) + '" alt="' + escapeHtml(ad.titulo) + '" style="width:60px;height:40px;object-fit:cover;border-radius:4px;background:#000;" onerror="this.src=\'assets/Logo latinos .png\'"></td>' +
+        '<td style="font-weight:700;">' + escapeHtml(ad.titulo) + '</td>' +
+        '<td><span class="pill pill--accent">' + escapeHtml(ad.ubicacion || "sidebar") + '</span></td>' +
+        '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer" style="color:var(--blue);font-size:12.5px;">' + escapeHtml(ad.enlace_url) + '</a></td>' +
+        '<td>' + estadoBadge + '</td>' +
+        '<td>' +
+        '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+        '<button class="btn-text" onclick="toggleEstadoAnuncio(' + ad.id + ')">' + toggleLabel + '</button>' +
+        '<button class="btn-text" onclick="abrirModalEditarAnuncio(' + ad.id + ')">Editar</button>' +
+        '<button class="btn-text danger" onclick="eliminarAnuncio(' + ad.id + ')">Eliminar</button>' +
+        '</div>' +
+        '</td>' +
+        "</tr>";
+    }).join("");
+  }
+
+  window.abrirModalNuevoAnuncio = function () {
+    state.editingAnuncioId = null;
+    document.getElementById("modalAnuncioTitulo").textContent = "Nuevo Anuncio";
+    document.getElementById("anuncioTituloInput").value = "";
+    document.getElementById("anuncioImagenInput").value = "";
+    document.getElementById("anuncioEnlaceInput").value = "";
+    document.getElementById("anuncioUbicacionInput").value = "sidebar";
+    document.getElementById("anuncioActivoInput").checked = true;
+    document.getElementById("anuncioErrorMsg").style.display = "none";
+    document.getElementById("modalAnuncio").classList.add("open");
+    setTimeout(function () { document.getElementById("anuncioTituloInput").focus(); }, 100);
+  };
+
+  window.abrirModalEditarAnuncio = function (id) {
+    var ad = anuncios.find(function (a) { return a.id === id; });
+    if (!ad) return;
+
+    state.editingAnuncioId = id;
+    document.getElementById("modalAnuncioTitulo").textContent = "Editar Anuncio";
+    document.getElementById("anuncioTituloInput").value = ad.titulo || "";
+    document.getElementById("anuncioImagenInput").value = ad.imagen_url || "";
+    document.getElementById("anuncioEnlaceInput").value = ad.enlace_url || "";
+    document.getElementById("anuncioUbicacionInput").value = ad.ubicacion || "sidebar";
+    document.getElementById("anuncioActivoInput").checked = !!ad.activo;
+    document.getElementById("anuncioErrorMsg").style.display = "none";
+    document.getElementById("modalAnuncio").classList.add("open");
+  };
+
+  window.cerrarModalAnuncio = function () {
+    document.getElementById("modalAnuncio").classList.remove("open");
+    state.editingAnuncioId = null;
+  };
+
+  async function guardarAnuncio() {
+    var titulo = document.getElementById("anuncioTituloInput").value.trim();
+    var imagen = document.getElementById("anuncioImagenInput").value.trim();
+    var enlace = document.getElementById("anuncioEnlaceInput").value.trim();
+    var ubicacion = document.getElementById("anuncioUbicacionInput").value;
+    var activo = document.getElementById("anuncioActivoInput").checked;
+    var errorEl = document.getElementById("anuncioErrorMsg");
+    var btn = document.getElementById("btnGuardarAnuncio");
+
+    if (!titulo || !imagen || !enlace) {
+      errorEl.textContent = "Todos los campos son obligatorios.";
+      errorEl.style.display = "block";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Guardando...";
+
+    try {
+      var payload = {
+        titulo: titulo,
+        imagen_url: imagen,
+        enlace_url: enlace,
+        ubicacion: ubicacion,
+        activo: activo
+      };
+
+      if (state.editingAnuncioId) {
+        var { error } = await window.supabase
+          .from("anuncios")
+          .update(payload)
+          .eq("id", state.editingAnuncioId);
+        if (error) throw error;
+        showToast("Éxito", "Anuncio actualizado correctamente.", "success");
+      } else {
+        var { error: insErr } = await window.supabase
+          .from("anuncios")
+          .insert([payload]);
+        if (insErr) throw insErr;
+        showToast("Éxito", "Anuncio creado correctamente.", "success");
+      }
+
+      cerrarModalAnuncio();
+      await cargarAnunciosDesdeSupabase();
+    } catch (err) {
+      console.error("Error al guardar anuncio:", err);
+      errorEl.textContent = err.message || "Error al comunicarse con la base de datos.";
+      errorEl.style.display = "block";
+      showToast("Error", err.message, "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Guardar Anuncio";
+    }
+  }
+
+  window.toggleEstadoAnuncio = async function (id) {
+    var ad = anuncios.find(function (a) { return a.id === id; });
+    if (!ad) return;
+
+    try {
+      var { error } = await window.supabase
+        .from("anuncios")
+        .update({ activo: !ad.activo })
+        .eq("id", id);
+
+      if (error) throw error;
+      showToast("Actualizado", "Estado del anuncio modificado.", "success");
+      await cargarAnunciosDesdeSupabase();
+    } catch (e) {
+      showToast("Error", e.message, "error");
+    }
+  };
+
+  window.eliminarAnuncio = async function (id) {
+    var ad = anuncios.find(function (a) { return a.id === id; });
+    if (!ad) return;
+    if (!confirm('¿Deseas eliminar el anuncio "' + ad.titulo + '"?')) return;
+
+    try {
+      var { error } = await window.supabase
+        .from("anuncios")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      showToast("Eliminado", "Anuncio eliminado correctamente.", "success");
+      await cargarAnunciosDesdeSupabase();
+    } catch (e) {
+      showToast("Error", e.message, "error");
+    }
+  };
 
   // =========================================================================
   // INICIALIZACIÓN Y EVENT LISTENERS
@@ -949,15 +1114,15 @@
           state.noticiasQuery = q;
           state.noticiasPage = 1;
           renderNoticias();
+        } else if (state.section === "comentarios") {
+          state.comentariosQuery = q;
+          renderComentarios();
         } else if (state.section === "categorias") {
           document.querySelectorAll("#categoriasGrid .cat-card").forEach(function (card, i) {
             if (!categorias[i]) return;
             var match = categorias[i].nombre.toLowerCase().indexOf(q) !== -1;
             card.style.display = q && !match ? "none" : "";
           });
-        } else if (state.section === "comentarios") {
-          state.comentariosQuery = q;
-          renderComentarios();
         }
       });
     }
@@ -980,6 +1145,13 @@
         renderNoticias();
       });
     }
+
+    document.querySelectorAll(".tab-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        state.comentariosTab = btn.dataset.tab;
+        renderComentarios();
+      });
+    });
 
     // 6. Paginación Noticias
     var prevBtn = document.getElementById("noticiasPrev");
@@ -1008,26 +1180,6 @@
       });
     }
 
-    // 7b. Comentarios: pestañas y acciones de moderación
-    document.querySelectorAll(".tab-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        state.comentariosTab = btn.dataset.tab;
-        renderComentarios();
-      });
-    });
-
-    var comList = document.getElementById("comentariosList");
-    if (comList) {
-      comList.addEventListener("click", function (e) {
-        var btn = e.target.closest("button");
-        if (!btn) return;
-        var aprobarId = btn.getAttribute("data-aprobar-comentario");
-        var eliminarId = btn.getAttribute("data-eliminar-comentario");
-        if (aprobarId) aprobarComentario(Number(aprobarId));
-        if (eliminarId) eliminarComentario(Number(eliminarId));
-      });
-    }
-
     // 8. Modal Categoría
     var formCat = document.getElementById("formCategoria");
     if (formCat) {
@@ -1042,11 +1194,21 @@
       btnConfirmDel.addEventListener("click", confirmarEliminarCategoria);
     }
 
+    // 9. Modal Anuncio
+    var formAnun = document.getElementById("formAnuncio");
+    if (formAnun) {
+      formAnun.addEventListener("submit", function (e) {
+        e.preventDefault();
+        guardarAnuncio();
+      });
+    }
+
     // Cerrar modales con tecla Escape
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") {
         cerrarModalCategoria();
         cerrarModalEliminarCat();
+        cerrarModalAnuncio();
       }
     });
 
@@ -1055,6 +1217,7 @@
       cargarCategoriasDesdeSupabase();
       cargarNoticiasDesdeSupabase();
       cargarComentariosDesdeSupabase();
+      cargarAnunciosDesdeSupabase();
     }
 
     // Comprobar parámetros de URL

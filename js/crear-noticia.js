@@ -40,6 +40,11 @@
   var archivoImagenSeleccionado = null;
   var urlImagenIngresada = "";
 
+  // Parámetro de edición
+  var params = new URLSearchParams(window.location.search);
+  var noticiaId = params.get("id");
+  var noticiaOriginal = null;
+
   // =========================================================================
   // INICIALIZACIÓN DE QUILL EDITOR
   // =========================================================================
@@ -135,6 +140,9 @@
   }
 
   function actualizarSlug() {
+    if (noticiaId && noticiaOriginal && noticiaOriginal.slug) {
+      return;
+    }
     var titulo = inputTitulo.value.trim();
     if (!titulo) {
       slugText.textContent = "...";
@@ -535,27 +543,53 @@
         es_destacada: esDestacada
       };
 
-      var { data, error } = await window.supabase
-        .from("noticias")
-        .insert([payload])
-        .select();
+      if (noticiaId) {
+        if (estado === "publicado" && noticiaOriginal && noticiaOriginal.publicado_en) {
+          payload.publicado_en = noticiaOriginal.publicado_en;
+        }
 
-      if (error) throw error;
+        var { data, error } = await window.supabase
+          .from("noticias")
+          .update(payload)
+          .eq("id", noticiaId);
 
-      var mensajeExito = estado === "publicado"
-        ? "¡Noticia publicada con éxito!"
-        : "Borrador guardado correctamente.";
+        if (error) throw error;
 
-      showToast("Éxito", mensajeExito, "success");
+        var mensajeExito = "Cambios guardados correctamente.";
+        showToast("Éxito", mensajeExito, "success");
 
-      if (mensajeEstado) {
-        mensajeEstado.textContent = mensajeExito + " Redirigiendo...";
-        mensajeEstado.style.color = "var(--success)";
+        if (mensajeEstado) {
+          mensajeEstado.textContent = mensajeExito + " Redirigiendo...";
+          mensajeEstado.style.color = "var(--success)";
+        }
+
+        setTimeout(function () {
+          window.location.href = "Panel-de-admin.html?seccion=noticias";
+        }, 1200);
+
+      } else {
+        var { data, error } = await window.supabase
+          .from("noticias")
+          .insert([payload])
+          .select();
+
+        if (error) throw error;
+
+        var mensajeExito = estado === "publicado"
+          ? "¡Noticia publicada con éxito!"
+          : "Borrador guardado correctamente.";
+
+        showToast("Éxito", mensajeExito, "success");
+
+        if (mensajeEstado) {
+          mensajeEstado.textContent = mensajeExito + " Redirigiendo...";
+          mensajeEstado.style.color = "var(--success)";
+        }
+
+        setTimeout(function () {
+          window.location.href = "Panel-de-admin.html?seccion=noticias&creada=1";
+        }, 1200);
       }
-
-      setTimeout(function () {
-        window.location.href = "Panel-de-admin.html?seccion=noticias&creada=1";
-      }, 1200);
 
     } catch (err) {
       console.error("Error al guardar noticia:", err);
@@ -602,22 +636,32 @@
     }
   });
 
-  // Verificar que el usuario tenga sesión de administrador activa
+  // =========================================================================
+  // CONTROL DE ACCESO
+  // NOTA: Esto es control de interfaz. La seguridad real y definitiva
+  // la garantiza el RLS de Supabase en la base de datos.
+  // =========================================================================
   async function verificarAccesoAdmin() {
-    if (!window.supabase) return;
+    if (!window.supabase) {
+      window.location.replace("latinos-en-pelota.html");
+      return false;
+    }
     try {
       var { data, error } = await window.supabase.auth.getSession();
-      if (error || !data || !data.session) {
-        showToast("Acceso Restringido", "Debes iniciar sesión en el panel para crear noticias.", "error");
-        setTimeout(function () {
-          window.location.href = "Panel-de-admin.html";
-        }, 1200);
-        return;
+      var session = data ? data.session : null;
+      var esAdmin = session && session.user && session.user.app_metadata && session.user.app_metadata.role === "admin";
+
+      if (error || !esAdmin) {
+        window.location.replace("latinos-en-pelota.html");
+        return false;
       }
 
-      var user = data.session.user;
+      var appEl = document.getElementById("crearNoticiaApp");
+      if (appEl) appEl.style.display = "";
+
+      var user = session.user;
       var email = user.email || "";
-      var userName = email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "Usuario";
+      var userName = email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "Administrador";
 
       var nameEl = document.getElementById("cn-userNameDisplay");
       var emailEl = document.getElementById("cn-userEmailDisplay");
@@ -625,10 +669,13 @@
 
       if (nameEl) nameEl.textContent = userName;
       if (emailEl) emailEl.textContent = email;
-      if (avatarEl) avatarEl.textContent = email ? email.slice(0, 2).toUpperCase() : "--";
+      if (avatarEl) avatarEl.textContent = email ? email.slice(0, 2).toUpperCase() : "AD";
 
+      return true;
     } catch (e) {
       console.warn("No se pudo validar sesión:", e);
+      window.location.replace("latinos-en-pelota.html");
+      return false;
     }
   }
 
@@ -643,8 +690,107 @@
     });
   }
 
+  // Cargar noticia en modo edición
+  async function cargarNoticiaParaEdicion(id) {
+    var idNum = parseInt(id, 10);
+    if (isNaN(idNum) || idNum <= 0 || String(idNum) !== String(id).trim()) {
+      showToast("Error", "El ID de la noticia no es válido.", "error");
+      setTimeout(function () {
+        window.location.href = "Panel-de-admin.html?seccion=noticias";
+      }, 1500);
+      return;
+    }
+
+    try {
+      var { data, error } = await window.supabase
+        .from("noticias")
+        .select("*")
+        .eq("id", idNum)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        showToast("No encontrada", "La noticia no existe.", "error");
+        setTimeout(function () {
+          window.location.href = "Panel-de-admin.html?seccion=noticias";
+        }, 1500);
+        return;
+      }
+
+      noticiaOriginal = data;
+
+      document.title = "Editar Noticia — Latinos en Pelota";
+
+      var pageTitle = document.getElementById("page-title");
+      if (pageTitle) pageTitle.textContent = "Editar Noticia";
+
+      var pageSubtitle = document.getElementById("page-subtitle");
+      if (pageSubtitle) pageSubtitle.textContent = "Modifica los datos y contenido de la noticia.";
+
+      var breadcrumbActual = document.getElementById("breadcrumb-actual");
+      if (breadcrumbActual) breadcrumbActual.textContent = "Editar Noticia";
+
+      var mobileTitle = document.getElementById("mobile-title");
+      if (mobileTitle) mobileTitle.textContent = "Editar Noticia";
+
+      var btnPubLabel = document.getElementById("btn-publicar-label");
+      if (btnPubLabel) btnPubLabel.textContent = "Guardar cambios";
+
+      var btnSidePub = document.getElementById("btn-sidebar-publicar");
+      if (btnSidePub) btnSidePub.textContent = "Guardar cambios";
+
+      var btnMobPub = document.getElementById("btn-publicar-mobile");
+      if (btnMobPub) btnMobPub.textContent = "Guardar cambios";
+
+      inputTitulo.value = data.titulo || "";
+      tituloCounter.textContent = inputTitulo.value.length + " / 120";
+      slugText.textContent = data.slug || "...";
+
+      inputSubtitulo.value = data.subtitulo || "";
+      subtituloCounter.textContent = inputSubtitulo.value.length + " / 220";
+
+      setEstado(data.estado === "borrador" ? "borrador" : "publicado");
+
+      await cargarCategorias(data.categoria_id);
+
+      if (data.imagen_url) {
+        urlImagenIngresada = data.imagen_url;
+        previewImgElement.src = data.imagen_url;
+        previewWrapper.style.display = "block";
+        if (inputImagenUrl) inputImagenUrl.value = data.imagen_url;
+      }
+
+      if (data.contenido) {
+        editor.clipboard.dangerouslyPasteHTML(data.contenido);
+        var text = editor.getText().trim();
+        var words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+        var minutes = Math.max(1, Math.ceil(words / 200));
+        if (wordCountEl) wordCountEl.textContent = words + (words === 1 ? " palabra" : " palabras");
+        if (readTimeEl) readTimeEl.textContent = minutes + " min de lectura estimada";
+      }
+
+    } catch (err) {
+      console.error("Error al cargar noticia para edición:", err);
+      showToast("Error", "No se pudo cargar la noticia: " + err.message, "error");
+      setTimeout(function () {
+        window.location.href = "Panel-de-admin.html?seccion=noticias";
+      }, 1500);
+    }
+  }
+
   // Inicializar
-  verificarAccesoAdmin();
-  cargarCategorias();
+  async function init() {
+    var esAdmin = await verificarAccesoAdmin();
+    if (!esAdmin) return;
+
+    if (noticiaId) {
+      cargarNoticiaParaEdicion(noticiaId);
+    } else {
+      cargarCategorias();
+    }
+  }
+
+  init();
 
 })();

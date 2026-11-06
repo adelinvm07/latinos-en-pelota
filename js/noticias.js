@@ -30,15 +30,6 @@
     return d.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
   }
 
-  function actualizarFechaHoy() {
-    var el = document.getElementById("fecha-hoy");
-    if (!el) return;
-    var f = new Date().toLocaleDateString("es-ES", {
-      weekday: "long", year: "numeric", month: "long", day: "numeric"
-    });
-    el.textContent = f.charAt(0).toUpperCase() + f.slice(1);
-  }
-
   // Si el contenido guardado es HTML se muestra tal cual;
   // si es texto plano, cada bloque separado por línea en blanco pasa a ser un párrafo.
   function prepararContenido(contenido) {
@@ -77,153 +68,245 @@
         '<div class="contenido">' + prepararContenido(n.contenido) + "</div>" +
       "</article>";
 
-    iniciarComentarios(n.id);
+    inicializarComentarios(n.id);
   }
 
-  // ---------------------------------------------------------------- Comentarios
-  var MIN_AUTOR = 2, MAX_AUTOR = 50, MIN_TEXTO = 2, MAX_TEXTO = 1000;
-  var ESPERA_SEGUNDOS = 30; // tiempo mínimo entre comentarios del mismo visitante
-
-  function guardado(clave, valor) {
-    try {
-      if (valor === undefined) return localStorage.getItem(clave);
-      localStorage.setItem(clave, valor);
-    } catch (e) { /* almacenamiento no disponible */ }
-    return null;
-  }
-
-  function fechaComentario(iso) {
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return "";
-    return d.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" }) +
-      ", " + d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
-  }
-
-  function iniciarComentarios(noticiaId) {
-    var cliente = window.supabase;
-
-    var seccion = document.createElement("section");
-    seccion.className = "comentarios";
-    seccion.id = "comentarios";
-    seccion.innerHTML =
-      '<h2>Comentarios<span id="total-comentarios"></span></h2>' +
-      '<form id="form-comentario" novalidate>' +
-        '<label for="c-autor">Nombre</label>' +
-        '<input type="text" id="c-autor" maxlength="' + MAX_AUTOR + '" autocomplete="nickname">' +
-        '<label for="c-texto">Tu comentario</label>' +
-        '<textarea id="c-texto" maxlength="' + MAX_TEXTO + '"></textarea>' +
-        '<div class="c-pie">' +
-          '<span id="c-contador">0 / ' + MAX_TEXTO + '</span>' +
-          '<button type="submit" id="c-enviar">Publicar comentario</button>' +
-        '</div>' +
-        '<input type="text" id="c-web" class="c-trampa" tabindex="-1" autocomplete="off" aria-hidden="true">' +
-        '<p id="c-mensaje" role="status" aria-live="polite"></p>' +
-      '</form>' +
-      '<div id="lista-comentarios"></div>';
-    contenedor.appendChild(seccion);
-
-    var form = document.getElementById("form-comentario");
-    var inputAutor = document.getElementById("c-autor");
-    var inputTexto = document.getElementById("c-texto");
-    var contador = document.getElementById("c-contador");
-    var boton = document.getElementById("c-enviar");
-    var mensaje = document.getElementById("c-mensaje");
-    var lista = document.getElementById("lista-comentarios");
-    var total = document.getElementById("total-comentarios");
-
-    inputAutor.value = guardado("comentarista") || "";
-    avisar("Los comentarios se revisan antes de publicarse.");
-
-    function avisar(texto, tipo) {
-      mensaje.textContent = texto;
-      mensaje.className = tipo || "";
+  // =========================================================================
+  // GESTIÓN DE COMENTARIOS REALES (SUPABASE)
+  // =========================================================================
+  async function inicializarComentarios(noticiaId) {
+    var sesionUsuario = null;
+    if (window.supabase && window.supabase.auth) {
+      try {
+        var { data } = await window.supabase.auth.getSession();
+        sesionUsuario = data ? data.session : null;
+      } catch (e) {
+        console.warn("No se pudo obtener sesión para comentarios:", e);
+      }
     }
 
-    inputTexto.addEventListener("input", function () {
-      contador.textContent = inputTexto.value.length + " / " + MAX_TEXTO;
+    var wrap = document.createElement("section");
+    wrap.className = "comentarios-wrap";
+    wrap.id = "seccion-comentarios";
+
+    var tituloH2 = document.createElement("h2");
+    tituloH2.id = "comentarios-titulo";
+    tituloH2.textContent = "Comentarios";
+    wrap.appendChild(tituloH2);
+
+    var formBox = document.createElement("div");
+    formBox.id = "contenedor-form-comentario";
+    wrap.appendChild(formBox);
+
+    var listaBox = document.createElement("div");
+    listaBox.id = "lista-comentarios";
+    wrap.appendChild(listaBox);
+
+    contenedor.appendChild(wrap);
+
+    renderizarFormularioComentario(noticiaId, sesionUsuario, formBox);
+    await cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2);
+
+    if (window.supabase && window.supabase.auth && window.supabase.auth.onAuthStateChange) {
+      window.supabase.auth.onAuthStateChange(async function (_evento, nuevaSesion) {
+        sesionUsuario = nuevaSesion;
+        renderizarFormularioComentario(noticiaId, sesionUsuario, formBox);
+        await cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2);
+      });
+    }
+  }
+
+  function renderizarFormularioComentario(noticiaId, sesionUsuario, formBox) {
+    if (!formBox) formBox = document.getElementById("contenedor-form-comentario");
+    if (!formBox) return;
+
+    formBox.innerHTML = "";
+
+    if (!sesionUsuario || !sesionUsuario.user) {
+      var promptEl = document.createElement("div");
+      promptEl.className = "comentarios-login-prompt";
+      promptEl.innerHTML = 'Para dejar un comentario, debes <a href="Panel-de-admin.html">iniciar sesión</a>.';
+      formBox.appendChild(promptEl);
+      return;
+    }
+
+    var form = document.createElement("form");
+    form.className = "comentario-form";
+    form.id = "form-nuevo-comentario";
+
+    var textarea = document.createElement("textarea");
+    textarea.placeholder = "Escribe tu comentario sobre esta noticia (máx. 500 caracteres)...";
+    textarea.maxLength = 500;
+    textarea.required = true;
+
+    var footer = document.createElement("div");
+    footer.className = "comentario-form-footer";
+
+    var contador = document.createElement("span");
+    contador.className = "comentario-contador";
+    contador.textContent = "0 / 500 caracteres";
+
+    textarea.addEventListener("input", function () {
+      contador.textContent = textarea.value.length + " / 500 caracteres";
     });
 
-    async function cargarLista() {
-      var r = await cliente
-        .from("comentarios")
-        .select("id, autor, contenido, creado_en")
-        .eq("noticia_id", noticiaId)
-        .eq("estado", "aprobado")
-        .order("creado_en", { ascending: false });
+    var btn = document.createElement("button");
+    btn.type = "submit";
+    btn.className = "btn-comentar";
+    btn.textContent = "Publicar Comentario";
 
-      if (r.error) {
-        console.error("Error cargando comentarios:", r.error);
-        total.textContent = "";
-        lista.innerHTML = '<p class="c-vacio">Los comentarios no están disponibles en este momento.</p>';
-        form.style.display = "none";
-        return;
-      }
-
-      var datos = r.data || [];
-      total.textContent = datos.length === 1 ? "1 comentario" : datos.length + " comentarios";
-
-      if (datos.length === 0) {
-        lista.innerHTML = '<p class="c-vacio">Todavía no hay comentarios. Sé el primero en opinar.</p>';
-        return;
-      }
-
-      lista.innerHTML = datos.map(function (c) {
-        var inicial = escapeHtml((c.autor || "?").trim().charAt(0).toUpperCase());
-        return (
-          '<article class="comentario">' +
-            '<div class="c-avatar" aria-hidden="true">' + inicial + '</div>' +
-            '<div class="c-cuerpo">' +
-              '<div class="c-cabecera"><strong>' + escapeHtml(c.autor) + '</strong>' +
-                '<time datetime="' + escapeHtml(c.creado_en) + '">' + fechaComentario(c.creado_en) + '</time></div>' +
-              '<p class="c-texto">' + escapeHtml(c.contenido).replace(/\n/g, "<br>") + '</p>' +
-            '</div>' +
-          '</article>'
-        );
-      }).join("");
-    }
+    footer.appendChild(contador);
+    footer.appendChild(btn);
+    form.appendChild(textarea);
+    form.appendChild(footer);
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
+      var texto = textarea.value.trim();
 
-      // Campo trampa: solo los robots lo llenan
-      if (document.getElementById("c-web").value) return;
-
-      var autor = inputAutor.value.trim();
-      var texto = inputTexto.value.trim();
-
-      if (autor.length < MIN_AUTOR) { avisar("Escribe tu nombre (mínimo " + MIN_AUTOR + " letras).", "error"); inputAutor.focus(); return; }
-      if (texto.length < MIN_TEXTO) { avisar("Escribe tu comentario antes de publicarlo.", "error"); inputTexto.focus(); return; }
-
-      var ultimo = Number(guardado("ultimo-comentario")) || 0;
-      var faltan = Math.ceil(ESPERA_SEGUNDOS - (Date.now() - ultimo) / 1000);
-      if (faltan > 0) { avisar("Espera " + faltan + " segundos para publicar otro comentario.", "error"); return; }
-
-      boton.disabled = true;
-      avisar("Publicando...");
-
-      var r = await cliente.from("comentarios").insert({
-        noticia_id: noticiaId,
-        autor: autor,
-        contenido: texto,
-        estado: "pendiente"
-      });
-
-      boton.disabled = false;
-
-      if (r.error) {
-        console.error("Error publicando comentario:", r.error);
-        avisar("No pudimos publicar tu comentario. Inténtalo de nuevo.", "error");
+      if (!texto) {
+        alert("El comentario no puede estar vacío.");
+        textarea.focus();
+        return;
+      }
+      if (texto.length > 500) {
+        alert("El comentario supera los 500 caracteres permitidos.");
         return;
       }
 
-      guardado("comentarista", autor);
-      guardado("ultimo-comentario", String(Date.now()));
-      inputTexto.value = "";
-      contador.textContent = "0 / " + MAX_TEXTO;
-      avisar("Gracias. Tu comentario fue enviado y aparecerá cuando un administrador lo apruebe.", "ok");
+      btn.disabled = true;
+      btn.textContent = "Publicando...";
+
+      try {
+        var user = sesionUsuario.user;
+        var autor = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.nombre))
+          || (user.email ? user.email.split("@")[0] : "Lector");
+
+        var { error } = await window.supabase
+          .from("comentarios")
+          .insert([{
+            noticia_id: noticiaId,
+            user_id: user.id,
+            autor: autor,
+            contenido: texto
+          }]);
+
+        if (error) throw error;
+
+        textarea.value = "";
+        contador.textContent = "0 / 500 caracteres";
+        var listaBox = document.getElementById("lista-comentarios");
+        var tituloH2 = document.getElementById("comentarios-titulo");
+        await cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2);
+      } catch (err) {
+        console.error("Error al publicar comentario:", err);
+        alert("Error al publicar comentario: " + (err.message || "Inténtalo más tarde"));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Publicar Comentario";
+      }
     });
 
-    cargarLista();
+    formBox.appendChild(form);
+  }
+
+  async function cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2) {
+    if (!listaBox) listaBox = document.getElementById("lista-comentarios");
+    if (!tituloH2) tituloH2 = document.getElementById("comentarios-titulo");
+    if (!listaBox) return;
+
+    try {
+      var { data: comentarios, error } = await window.supabase
+        .from("comentarios")
+        .select("id, noticia_id, user_id, autor, contenido, created_at")
+        .eq("noticia_id", noticiaId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      var total = comentarios ? comentarios.length : 0;
+      if (tituloH2) {
+        tituloH2.textContent = "Comentarios (" + total + ")";
+      }
+
+      listaBox.innerHTML = "";
+
+      if (!comentarios || comentarios.length === 0) {
+        var empty = document.createElement("div");
+        empty.className = "sin-comentarios";
+        empty.textContent = "Aún no hay comentarios en esta noticia. ¡Sé el primero en opinar!";
+        listaBox.appendChild(empty);
+        return;
+      }
+
+      var currentUser = sesionUsuario ? sesionUsuario.user : null;
+      var esAdmin = currentUser && currentUser.app_metadata && currentUser.app_metadata.role === "admin";
+
+      comentarios.forEach(function (c) {
+        var itemEl = document.createElement("div");
+        itemEl.className = "comentario-item";
+
+        var headerEl = document.createElement("div");
+        headerEl.className = "comentario-header";
+
+        var autorEl = document.createElement("span");
+        autorEl.className = "comentario-autor";
+        autorEl.textContent = c.autor || "Anónimo"; // textContent seguro
+
+        var fechaEl = document.createElement("span");
+        fechaEl.className = "comentario-fecha";
+        fechaEl.textContent = formatearFecha(c.created_at); // textContent seguro
+
+        headerEl.appendChild(autorEl);
+        headerEl.appendChild(fechaEl);
+        itemEl.appendChild(headerEl);
+
+        var textoEl = document.createElement("p");
+        textoEl.className = "comentario-texto";
+        textoEl.textContent = c.contenido; // textContent seguro (evita XSS)
+        itemEl.appendChild(textoEl);
+
+        if (currentUser && (currentUser.id === c.user_id || esAdmin)) {
+          var accionesEl = document.createElement("div");
+          accionesEl.className = "comentario-acciones";
+
+          var btnBorrar = document.createElement("button");
+          btnBorrar.className = "btn-borrar-comentario";
+          btnBorrar.textContent = "Eliminar";
+          btnBorrar.onclick = async function () {
+            if (!confirm("¿Deseas eliminar este comentario?")) return;
+            btnBorrar.disabled = true;
+            try {
+              var { error: delError } = await window.supabase
+                .from("comentarios")
+                .delete()
+                .eq("id", c.id);
+
+              if (delError) throw delError;
+
+              await cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2);
+            } catch (err) {
+              console.error("Error al eliminar comentario:", err);
+              alert("Error al eliminar comentario: " + err.message);
+              btnBorrar.disabled = false;
+            }
+          };
+
+          accionesEl.appendChild(btnBorrar);
+          itemEl.appendChild(accionesEl);
+        }
+
+        listaBox.appendChild(itemEl);
+      });
+
+    } catch (err) {
+      console.error("Error al cargar comentarios:", err);
+      listaBox.innerHTML = "";
+      var errorMsg = document.createElement("div");
+      errorMsg.className = "sin-comentarios";
+      errorMsg.textContent = "No se pudieron cargar los comentarios en este momento.";
+      listaBox.appendChild(errorMsg);
+    }
   }
 
   async function cargarNoticia() {
@@ -266,7 +349,9 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    actualizarFechaHoy();
+    if (typeof actualizarFechaCabecera === "function") {
+      actualizarFechaCabecera();
+    }
     cargarNoticia();
   });
 })();

@@ -126,7 +126,7 @@
 <!-- =========================================================================
      INTERFAZ PRINCIPAL DEL PANEL
      ========================================================================= -->
-<div class="app" id="adminAppContainer">
+<div class="app" id="adminAppContainer" style="display:none;">
 
   <!-- Mobile Topbar -->
   <div class="mobile-topbar">
@@ -171,6 +171,10 @@
     <button class="nav-item" data-section="comentarios">
       <span>Comentarios</span>
       <span class="nav-badge" id="badgeComentarios">0</span>
+    </button>
+    <button class="nav-item" data-section="anuncios">
+      <span>Publicidad</span>
+      <span class="nav-badge" id="badgeAnuncios">0</span>
     </button>
 
     <div class="nav-group-label">Portal Público</div>
@@ -286,7 +290,7 @@
                 <th style="text-align:right;">Acciones</th>
               </tr></thead>
               <tbody id="noticiasBody">
-                <tr><td colspan="7" style="text-align:center;padding:30px;"><div class="empty-state"><p>Cargando noticias desde Supabase...</p></div></td></tr>
+                <tr><td colspan="6" style="text-align:center;padding:30px;"><div class="empty-state"><p>Cargando noticias desde Supabase...</p></div></td></tr>
               </tbody>
             </table>
           </div>
@@ -327,6 +331,37 @@
           <button class="tab-btn" data-tab="aprobado">Aprobados</button>
         </div>
         <div class="comment-list" id="comentariosList"></div>
+      </section>
+
+      <!-- ==================== SECCIÓN: PUBLICIDAD ==================== -->
+      <section class="section" data-view="anuncios">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;background:var(--surface);padding:16px 20px;border-radius:var(--radius);border:1px solid var(--border);">
+          <div>
+            <h3 style="font-size:16px;font-weight:700;">Espacios Publicitarios</h3>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">Gestiona los banners y anuncios que aparecen en el portal público.</p>
+          </div>
+          <div>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalNuevoAnuncio()">+ Nuevo Anuncio</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr>
+                <th>Vista</th>
+                <th>Título</th>
+                <th>Ubicación</th>
+                <th>Enlace</th>
+                <th>Estado</th>
+                <th style="text-align:right;">Acciones</th>
+              </tr></thead>
+              <tbody id="anunciosBody">
+                <tr><td colspan="6" style="text-align:center;padding:30px;"><div class="empty-state"><p>Cargando anuncios...</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       <!-- Placeholders analítica -->
@@ -379,6 +414,48 @@
       <button type="button" class="btn btn-ghost" onclick="cerrarModalEliminarCat()">Cancelar</button>
       <button type="button" class="btn btn-danger" id="btnConfirmDelCat">Sí, Eliminar</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal: Crear / Editar Anuncio -->
+<div class="modal-backdrop" id="modalAnuncio">
+  <div class="modal" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3 id="modalAnuncioTitulo">Nuevo Anuncio</h3>
+      <button class="modal-close" onclick="cerrarModalAnuncio()">&times;</button>
+    </div>
+    <form id="formAnuncio">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="anuncioTituloInput">Título del Anuncio</label>
+          <input type="text" id="anuncioTituloInput" class="input-control" placeholder="Ej: Apuestas deportivas, Nueva colección..." required autocomplete="off">
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+          <label class="form-label" for="anuncioImagenInput">URL de la Imagen</label>
+          <input type="url" id="anuncioImagenInput" class="input-control" placeholder="https://ejemplo.com/banner.jpg" required autocomplete="off">
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+          <label class="form-label" for="anuncioEnlaceInput">URL de Destino (Enlace)</label>
+          <input type="text" id="anuncioEnlaceInput" class="input-control" placeholder="https://ejemplo.com/oferta o #" required autocomplete="off">
+        </div>
+        <div class="form-group" style="margin-top:12px;">
+          <label class="form-label" for="anuncioUbicacionInput">Ubicación</label>
+          <select id="anuncioUbicacionInput" class="input-control">
+            <option value="sidebar">Barra lateral (Sidebar)</option>
+            <option value="banner">Banner general</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-top:12px;display:flex;align-items:center;gap:10px;">
+          <input type="checkbox" id="anuncioActivoInput" checked style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer;">
+          <label for="anuncioActivoInput" style="font-size:14px;cursor:pointer;">Anuncio activo (visible en la web)</label>
+        </div>
+        <p id="anuncioErrorMsg" style="color:var(--danger);font-size:13px;display:none;background:var(--danger-soft);padding:8px 12px;border-radius:6px;margin-top:10px;"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="cerrarModalAnuncio()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btnGuardarAnuncio">Guardar Anuncio</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -436,10 +513,21 @@ async function cargarVisitas() {
   );
 }
 
-cargarVisitas();
+async function verificarYcargarVisitas() {
+  const cli = obtenerClienteSupabase();
+  if (!cli || !cli.auth) return;
+  const { data } = await cli.auth.getSession();
+  if (data && data.session && data.session.user && data.session.user.app_metadata && data.session.user.app_metadata.role === 'admin') {
+    cargarVisitas();
+  }
+}
+
+verificarYcargarVisitas();
 const _cliVisitas = obtenerClienteSupabase();
-if (_cliVisitas && _cliVisitas.auth) _cliVisitas.auth.onAuthStateChange((evento) => {
-  if (evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION') cargarVisitas();
+if (_cliVisitas && _cliVisitas.auth) _cliVisitas.auth.onAuthStateChange((evento, sesion) => {
+  if ((evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION') && sesion && sesion.user && sesion.user.app_metadata && sesion.user.app_metadata.role === 'admin') {
+    cargarVisitas();
+  }
 });
 </script>
 

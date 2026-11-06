@@ -181,12 +181,12 @@
 </head>
 <body>
 
-<div class="app">
+<div class="app" id="crearNoticiaApp" style="display:none;">
 
     <!-- Mobile Topbar -->
     <div class="mobile-topbar">
         <a href="Panel-de-admin.html" class="btn btn-ghost btn-sm">← Volver al Panel</a>
-        <strong>Crear Noticia</strong>
+        <strong id="mobile-title">Crear Noticia</strong>
         <button type="button" class="btn btn-primary btn-sm" id="btn-publicar-mobile">Publicar</button>
     </div>
 
@@ -243,13 +243,13 @@
                 <span>/</span>
                 <a href="Panel-de-admin.html?seccion=noticias">Noticias</a>
                 <span>/</span>
-                <span style="color:#fff;">Redactar Noticia</span>
+                <span style="color:#fff;" id="breadcrumb-actual">Redactar Noticia</span>
             </div>
 
             <div class="topbar">
                 <div class="topbar-titles">
-                    <h1>Crear Nueva Noticia</h1>
-                    <p>Redacta tu contenido deportiv.</p>
+                    <h1 id="page-title">Crear Nueva Noticia</h1>
+                    <p id="page-subtitle">Redacta tu contenido deportivo.</p>
                 </div>
                 <div class="topbar-actions">
                     <button type="button" class="btn btn-ghost" id="btn-vista-previa">
@@ -259,7 +259,7 @@
                     <button type="button" class="btn btn-ghost" id="btn-borrador">Guardar Borrador</button>
                     <button type="button" class="btn btn-primary" id="btn-publicar">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                        Publicar Noticia
+                        <span id="btn-publicar-label">Publicar Noticia</span>
                     </button>
                 </div>
             </div>

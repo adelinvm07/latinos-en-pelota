@@ -11,3 +11,24 @@ if (typeof window !== 'undefined') {
 }
 
 var supabase = (typeof window !== 'undefined') ? (window.supabaseClient || window.supabase) : null;
+
+// Fecha dinámica de cabecera compartida
+function actualizarFechaCabecera() {
+  var el = document.getElementById("fecha-hoy");
+  if (!el) return;
+  var f = new Date().toLocaleDateString("es-DO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+  el.textContent = f.charAt(0).toUpperCase() + f.slice(1);
+}
+
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", actualizarFechaCabecera);
+  } else {
+    actualizarFechaCabecera();
+  }
+}

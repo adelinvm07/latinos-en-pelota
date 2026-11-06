@@ -298,19 +298,52 @@
     });
   }
 
-  function actualizarFechaHoy() {
-    var fechaElemento = document.getElementById("fecha-hoy");
-    if (!fechaElemento) return;
-    var hoy = new Date();
-    var opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    var fechaFormateada = hoy.toLocaleDateString('es-ES', opciones);
-    fechaElemento.textContent = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+  // =========================================================================
+  // CARGAR PUBLICIDAD (ANUNCIOS DINÁMICOS)
+  // =========================================================================
+  async function cargarAnuncios() {
+    var asideSidebar = document.getElementById("sidebar-anuncios") || document.querySelector("aside.sidebar");
+    if (!asideSidebar || !window.supabase) return;
+
+    try {
+      var { data, error } = await window.supabase
+        .from("anuncios")
+        .select("id, titulo, imagen_url, enlace_url, ubicacion, activo")
+        .eq("activo", true)
+        .order("id", { ascending: true });
+
+      if (error) throw error;
+      if (!data || data.length === 0) return;
+
+      asideSidebar.innerHTML = data.map(function (ad) {
+        return (
+          '<div class="ad-card">' +
+            '<div class="media">' +
+              '<a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer">' +
+                '<img src="' + escapeHtml(ad.imagen_url) + '" alt="' + escapeHtml(ad.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
+              '</a>' +
+            '</div>' +
+            '<div class="body">' +
+              '<div class="ad-label">PUBLICIDAD</div>' +
+              '<h3>' + escapeHtml(ad.titulo) + '</h3>' +
+              '<a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer" class="btn" style="margin-top:10px;">Ver oferta →</a>' +
+            '</div>' +
+          '</div>'
+        );
+      }).join("");
+
+    } catch (e) {
+      console.warn("No se pudieron cargar anuncios dinámicos de Supabase:", e);
+    }
   }
 
   document.addEventListener("DOMContentLoaded", async function () {
-    actualizarFechaHoy();
+    if (typeof actualizarFechaCabecera === "function") {
+      actualizarFechaCabecera();
+    }
     await cargarCategorias();
     await cargarNoticias();
+    await cargarAnuncios();
   });
 
 })();

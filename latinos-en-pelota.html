@@ -316,7 +316,7 @@
     </div>
   </article>
 
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar-anuncios">
     <div class="ad-card">
       <div class="media">
         <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Basketball%20pic.png" alt="Balón de baloncesto">
@@ -354,38 +354,43 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 
+<!-- Control de interfaz: Mostrar acceso al panel solo a administradores autenticados.
+     (Nota: Esto es solo para la interfaz de usuario; la seguridad real la garantiza el RLS en Supabase) -->
 <script>
   document.addEventListener("DOMContentLoaded", async function () {
     const btnAdmin = document.getElementById("btnPanelAdmin");
     if (!btnAdmin || !window.supabase) return;
 
+    function aplicarVisibilidadAdmin(session) {
+      const esAdmin = session && session.user && session.user.app_metadata && session.user.app_metadata.role === "admin";
+      btnAdmin.style.display = esAdmin ? "inline-block" : "none";
+    }
+
     try {
       const { data: { session } } = await window.supabase.auth.getSession();
+      aplicarVisibilidadAdmin(session);
 
-      if (!session || !session.user) {
-        btnAdmin.style.display = "none";
-        return;
+      if (window.supabase.auth && window.supabase.auth.onAuthStateChange) {
+        window.supabase.auth.onAuthStateChange((_evento, sesionActual) => {
+          aplicarVisibilidadAdmin(sesionActual);
+        });
       }
-
-      const { data: perfil, error } = await window.supabase
-        .from("perfiles") 
-        .select("rol")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      const esAdmin = perfil && (perfil.rol === "admin" || perfil.rol === "Admin");
-
-      if (esAdmin) {
-        btnAdmin.style.display = "inline-block";
-      } else {
-        btnAdmin.style.display = "none";
-      }
-
     } catch (err) {
       console.error("Error al verificar permisos:", err);
       btnAdmin.style.display = "none";
     }
   });
+</script>
+
+<script>
+(function () {
+  var fecha = document.getElementById("fecha-hoy");
+  if (fecha) {
+    fecha.textContent = new Intl.DateTimeFormat("es-DO", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric"
+    }).format(new Date());
+  }
+})();
 </script>
 
 <script src="js/buscador.js"></script>
