@@ -26,7 +26,10 @@
   }
 
   function urlNoticia(item) {
-    return "noticia.html?slug=" + encodeURIComponent(item.slug);
+    if (!item) return "noticia.html";
+    if (item.slug) return "noticia.html?slug=" + encodeURIComponent(item.slug);
+    if (item.id) return "noticia.html?id=" + encodeURIComponent(item.id);
+    return "noticia.html";
   }
 
   function formatearFecha(isoString) {
@@ -337,13 +340,19 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", async function () {
+  async function iniciar() {
     if (typeof actualizarFechaCabecera === "function") {
       actualizarFechaCabecera();
     }
     await cargarCategorias();
     await cargarNoticias();
     await cargarAnuncios();
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", iniciar);
+  } else {
+    iniciar();
+  }
 
 })();

@@ -46,7 +46,7 @@
       '<div class="estado">' +
         "<h1>" + titulo + "</h1>" +
         "<p>" + detalle + "</p>" +
-        '<a class="volver" href="index.html">Volver a las noticias</a>' +
+        '<a class="volver" href="latinos-en-pelota.html">Volver a las noticias</a>' +
       "</div>";
   }
 
@@ -348,10 +348,16 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function iniciar() {
     if (typeof actualizarFechaCabecera === "function") {
       actualizarFechaCabecera();
     }
     cargarNoticia();
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", iniciar);
+  } else {
+    iniciar();
+  }
 })();
