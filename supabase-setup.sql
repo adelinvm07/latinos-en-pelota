@@ -192,6 +192,14 @@ CREATE TABLE IF NOT EXISTS public.anuncios (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Asegurar compatibilidad de columnas en 'anuncios'
+ALTER TABLE public.anuncios ADD COLUMN IF NOT EXISTS titulo TEXT;
+ALTER TABLE public.anuncios ADD COLUMN IF NOT EXISTS imagen_url TEXT;
+ALTER TABLE public.anuncios ADD COLUMN IF NOT EXISTS enlace_url TEXT;
+ALTER TABLE public.anuncios ADD COLUMN IF NOT EXISTS ubicacion TEXT DEFAULT 'sidebar';
+ALTER TABLE public.anuncios ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT true;
+ALTER TABLE public.anuncios ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
 -- RLS para 'anuncios'
 ALTER TABLE public.anuncios ENABLE ROW LEVEL SECURITY;
 
