@@ -265,33 +265,18 @@
     if (!window.supabase) return;
 
     try {
-      // 1. Obtener todas las categorías ordenadas por nombre
-      var { data: catData, error: catError } = await window.supabase
-        .from("categorias")
-        .select("id, nombre")
+      var { data, error } = await window.supabase
+        .from("categorias_con_conteo_noticias")
+        .select("id, nombre, total_noticias")
         .order("nombre", { ascending: true });
 
-      if (catError) throw catError;
+      if (error) throw error;
 
-      // 2. Obtener conteo de noticias por categoría
-      var { data: notiData, error: notiError } = await window.supabase
-        .from("noticias")
-        .select("id, categoria_id");
-
-      var countMap = {};
-      if (notiData) {
-        notiData.forEach(function (n) {
-          if (n.categoria_id) {
-            countMap[n.categoria_id] = (countMap[n.categoria_id] || 0) + 1;
-          }
-        });
-      }
-
-      categorias = (catData || []).map(function (cat, idx) {
+      categorias = (data || []).map(function (cat, idx) {
         return {
           id: cat.id,
           nombre: cat.nombre,
-          count: countMap[cat.id] || 0,
+          count: Number(cat.total_noticias),
           color: catPalette[idx % catPalette.length]
         };
       });

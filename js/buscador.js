@@ -102,9 +102,8 @@
 
     try {
       var { data, error } = await window.supabase
-        .from("noticias")
-        .select("id, slug, titulo, subtitulo, imagen_url, estado, publicado_en, es_destacada, categorias(id, nombre)")
-        .eq("estado", "publicado")
+        .from("noticias_publicadas")
+        .select("id, slug, titulo, subtitulo, imagen_url, publicado_en, es_destacada, categoria_id, categoria_nombre")
         .order("publicado_en", { ascending: false });
 
       if (error) throw error;
@@ -116,8 +115,8 @@
           titulo: item.titulo || "Sin título",
           subtitulo: item.subtitulo || "",
           imagen: item.imagen_url || IMAGEN_PLACEHOLDER,
-          categoriaId: item.categorias ? String(item.categorias.id) : null,
-          categoria: item.categorias ? item.categorias.nombre : "General",
+          categoriaId: item.categoria_id == null ? null : String(item.categoria_id),
+          categoria: item.categoria_nombre ?? "General",
           fecha: formatearFecha(item.publicado_en),
           rawFecha: item.publicado_en ? new Date(item.publicado_en) : null,
           esDestacada: Boolean(item['es_destacada'])
