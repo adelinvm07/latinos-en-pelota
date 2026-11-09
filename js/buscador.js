@@ -218,7 +218,7 @@
         heroArticulo.innerHTML =
           '<div class="media">' +
             '<a href="' + urlNoticia(destacada) + '" style="display:block;height:100%">' +
-              '<img src="' + escapeHtml(destacada.imagen) + '" alt="' + escapeHtml(destacada.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
+              '<img src="' + escapeHtml(destacada.imagen) + '" alt="' + escapeHtml(destacada.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'" style="transition: transform 0.3s ease;">' +
             '</a>' +
           '</div>' +
           '<div class="body">' +

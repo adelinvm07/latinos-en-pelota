@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/png" href="assets/Logo latinos .png">
+<link rel="stylesheet" href="css/style.css">
 <title>Latinos en Pelota</title>
 <style>
   :root{
@@ -165,9 +166,21 @@
     justify-content:flex-end;
     min-height:400px;
     background:var(--navy);
-    border-radius:6px;
+    border-radius:12px;
     overflow:hidden;
     color:#fff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.25s ease;
+    cursor: pointer;
+    animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .hero:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    border-color: #cbd5e1;
   }
   .hero .media{
     position:absolute;
@@ -213,8 +226,8 @@
   @media (max-width:880px){.sidebar{grid-column:1;}}
 
   .ad-card{
-    background:#fff;border:1px solid var(--line);border-radius:6px;
-    overflow:hidden;
+    background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+    overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);
   }
   .ad-card .media{aspect-ratio:16/7;}
   .ad-card .body{padding:14px 16px 16px;}
@@ -236,8 +249,7 @@
   @media (max-width:880px){.grid{grid-template-columns:1fr 1fr;}}
   @media (max-width:560px){.grid{grid-template-columns:1fr;}}
 
-  /* ===== Cuando se oculta el banner hero =====
-     Las noticias suben a la primera fila, alineadas desde arriba. */
+  /* ===== Cuando se oculta el banner hero ===== */
   main.sin-hero .grid{
     grid-column:1;
     grid-row:1;
@@ -253,13 +265,6 @@
   @media (max-width:560px){
     main.sin-hero .grid{grid-template-columns:1fr;}
   }
-
-  article.story{display:flex;flex-direction:column;}
-  article.story .media{aspect-ratio:4/3;border-radius:4px;overflow:hidden;background:#dde1e7;}
-  article.story .tag{margin-top:14px;}
-  article.story h3{margin:0 0 8px;font-size:17px;line-height:1.3;}
-  article.story p{margin:0 0 10px;font-size:14px;color:var(--muted);line-height:1.5;}
-  article.story .byline{color:var(--muted);}
 
   footer{
     background:var(--navy);color:#8394ab;text-align:center;
@@ -280,13 +285,11 @@
   </div>
   <div style="display:flex;align-items:center;gap:16px;">
    <div class="date" id="fecha-hoy">Cargando fecha...</div>
-   <a href="Panel-de-admin.html" id="btnPanelAdmin" style="display: none; font-size:13px;color:var(--yellow);padding:6px 12px;border:1px solid rgba(242,193,78,0.4);border-radius:4px;font-weight:600;">Panel Admin</a>
   </div>
 </header>
 
 <nav class="tabs" id="contenedor-tabs">
   <a href="#" class="active">Todas</a>
-  <!-- Las categorías de Supabase se cargarán aquí dinámicamente -->
 
   <div class="nav-controls">
     <select id="filtro-fecha" class="date-select" aria-label="Filtrar por fecha">
@@ -354,8 +357,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 
-<!-- Control de interfaz: Mostrar acceso al panel solo a administradores autenticados.
-     (Nota: Esto es solo para la interfaz de usuario; la seguridad real la garantiza el RLS en Supabase) -->
 <script>
   document.addEventListener("DOMContentLoaded", async function () {
     const btnAdmin = document.getElementById("btnPanelAdmin");
