@@ -175,48 +175,70 @@
     var errorEl = document.getElementById("loginErrorMsg");
     var btnSubmit = document.getElementById("btnLoginSubmit");
 
+    var btnRegistro = document.getElementById("btnRegistro");
+    var aviso = document.getElementById("registroAviso");
+
     if (form) {
       form.addEventListener("submit", async function (e) {
         e.preventDefault();
+        var registrar = e.submitter === btnRegistro;
         var email = emailInput.value.trim();
-        var pass = passInput.value.trim();
+        var pass = passInput.value;
+
+        errorEl.style.display = "none";
+        aviso.hidden = true;
 
         if (!email || !pass) return;
 
+        if (registrar && pass.length < 6) {
+          errorEl.textContent = "Usa una contraseña de al menos 6 caracteres.";
+          errorEl.style.display = "block";
+          return;
+        }
+
+        var botonActivo = registrar ? btnRegistro : btnSubmit;
+        var textoOriginal = botonActivo.textContent;
         btnSubmit.disabled = true;
-        btnSubmit.textContent = "Verificando...";
-        errorEl.style.display = "none";
+        btnRegistro.disabled = true;
+        botonActivo.textContent = registrar ? "Creando cuenta..." : "Verificando...";
 
         try {
-          var { data: loginData, error: loginError } = await window.supabase.auth.signInWithPassword({
-            email: email,
-            password: pass
-          });
+          var auth = window.supabase.auth;
+          var credenciales = { email: email, password: pass };
+          var { data, error } = registrar
+            ? await auth.signUp(credenciales)
+            : await auth.signInWithPassword(credenciales);
 
-          if (loginError) throw loginError;
+          if (error) throw error;
 
-          var user = loginData && loginData.user;
-          var esAdmin = user && user.app_metadata && user.app_metadata.role === "admin";
-
-          if (!esAdmin) {
-            await window.supabase.auth.signOut();
-            throw new Error("Acceso denegado: tu cuenta no posee privilegios de administrador.");
+          if (registrar && !data.session) {
+            aviso.textContent = "Revisa tu correo para confirmar tu cuenta. Si ya tienes una cuenta, inicia sesión.";
+            aviso.hidden = false;
+            return;
           }
 
-          showToast("Acceso Concedido", "Sesión iniciada correctamente.", "success");
-          await verificarSesion();
-          await cargarCategoriasDesdeSupabase();
-          await cargarNoticiasDesdeSupabase();
+          if (data.session.user.app_metadata?.role === "admin") {
+            window.location.reload();
+          } else {
+            window.location.replace("latinos-en-pelota.html");
+          }
         } catch (err) {
           console.error("Error de autenticación:", err);
-          var msg = err.message || "Correo o contraseña incorrectos. Solo el personal autorizado puede acceder.";
-          errorEl.textContent = msg;
+          var mensajes = {
+            invalid_credentials: "El correo o la contraseña son incorrectos.",
+            user_already_exists: "Este correo ya está registrado. Inicia sesión.",
+            email_exists: "Este correo ya está registrado. Inicia sesión.",
+            email_not_confirmed: "Confirma tu correo antes de iniciar sesión.",
+            weak_password: "La contraseña es demasiado corta o no cumple los requisitos de seguridad."
+          };
+          errorEl.textContent = mensajes[err.code] || (registrar
+            ? "No se pudo crear la cuenta. Inténtalo de nuevo."
+            : "No se pudo iniciar sesión. Inténtalo de nuevo.");
           errorEl.style.display = "block";
-          errorEl.style.color = "var(--danger)";
-          errorEl.style.background = "var(--danger-soft)";
         } finally {
           btnSubmit.disabled = false;
-          btnSubmit.textContent = "Iniciar Sesión";
+          btnRegistro.disabled = false;
+          botonActivo.textContent = textoOriginal;
         }
       });
     }
