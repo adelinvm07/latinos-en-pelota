@@ -1,14 +1,7 @@
-/**
- * Latinos en Pelota — Lógica para Crear y Editar Noticias
- * Conexión completa con Supabase, Quill Editor, previsualización en vivo y carga de imágenes.
- */
 
 (function () {
   "use strict";
 
-  // =========================================================================
-  // ELEMENTOS DEL DOM
-  // =========================================================================
   var inputTitulo = document.getElementById("titulo");
   var inputSubtitulo = document.getElementById("subtitulo");
   var selectCategoria = document.getElementById("categoria");
@@ -19,7 +12,6 @@
   var readTimeEl = document.getElementById("read-time");
   var mensajeEstado = document.getElementById("mensaje-estado");
 
-  // Imagen elements
   var tabUpload = document.getElementById("tab-upload");
   var tabUrl = document.getElementById("tab-url");
   var modeUpload = document.getElementById("media-mode-upload");
@@ -31,23 +23,17 @@
   var previewImgElement = document.getElementById("preview-img-element");
   var btnQuitarImagen = document.getElementById("btn-quitar-imagen");
 
-  // Estado selector
   var optPublicado = document.getElementById("opt-publicado");
   var optBorrador = document.getElementById("opt-borrador");
   var estadoActual = "publicado";
 
-  // Archivo y URL en memoria
   var archivoImagenSeleccionado = null;
   var urlImagenIngresada = "";
 
-  // Parámetro de edición
   var params = new URLSearchParams(window.location.search);
   var noticiaId = params.get("id");
   var noticiaOriginal = null;
 
-  // =========================================================================
-  // INICIALIZACIÓN DE QUILL EDITOR
-  // =========================================================================
   var editor = new Quill("#editor-contenido", {
     theme: "snow",
     placeholder: "Escribe aquí la crónica, detalles del partido, declaraciones o análisis deportivo...",
@@ -62,7 +48,6 @@
     }
   });
 
-  // Conteo de palabras y tiempo de lectura
   editor.on("text-change", function () {
     var text = editor.getText().trim();
     var words = text ? text.split(/\s+/).filter(Boolean).length : 0;
@@ -72,9 +57,6 @@
     if (readTimeEl) readTimeEl.textContent = minutes + " min de lectura estimada";
   });
 
-  // =========================================================================
-  // SISTEMA DE TOASTS
-  // =========================================================================
   function showToast(title, message, type) {
     type = type || "info";
     var container = document.getElementById("toast-container");
@@ -121,19 +103,16 @@
       .replace(/'/g, "&#039;");
   }
 
-  // =========================================================================
-  // GENERADOR DE SLUG LIMPIO (SEF)
-  // =========================================================================
   function generarSlug(texto) {
     if (!texto) return "";
     var base = texto
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // quitar acentos
-      .replace(/[^a-z0-9\s-]/g, "")     // solo letras, números y espacios
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
       .trim()
-      .replace(/\s+/g, "-")           // espacios a guiones
-      .replace(/-+/g, "-");           // evitar dobles guiones
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
 
     var rand = Math.floor(1000 + Math.random() * 9000);
     return (base.slice(0, 70) || "noticia") + "-" + rand;
@@ -152,7 +131,6 @@
     slugText.textContent = slugGenerado;
   }
 
-  // Contadores de caracteres
   inputTitulo.addEventListener("input", function () {
     var len = inputTitulo.value.length;
     tituloCounter.textContent = len + " / 120";
@@ -164,9 +142,6 @@
     subtituloCounter.textContent = len + " / 220";
   });
 
-  // =========================================================================
-  // GESTIÓN DE ESTADO (PUBLICADO / BORRADOR)
-  // =========================================================================
   function setEstado(nuevoEstado) {
     estadoActual = nuevoEstado;
     if (nuevoEstado === "publicado") {
@@ -181,9 +156,6 @@
   optPublicado.addEventListener("click", function () { setEstado("publicado"); });
   optBorrador.addEventListener("click", function () { setEstado("borrador"); });
 
-  // =========================================================================
-  // CARGAR CATEGORÍAS DESDE SUPABASE
-  // =========================================================================
   async function cargarCategorias(selectIdToSelect) {
     if (!window.supabase) {
       console.warn("Cliente Supabase no disponible");
@@ -207,7 +179,7 @@
 
       data.forEach(function (cat) {
         var opt = document.createElement("option");
-        opt.value = cat.id; // ¡ID numérico de la categoría!
+        opt.value = cat.id;
         opt.textContent = cat.nombre;
         if (selectIdToSelect && Number(selectIdToSelect) === Number(cat.id)) {
           opt.selected = true;
@@ -221,9 +193,6 @@
     }
   }
 
-  // =========================================================================
-  // MODAL: NUEVA CATEGORÍA RÁPIDA
-  // =========================================================================
   var modalCatRapida = document.getElementById("modalNuevaCatRapida");
   var btnNuevaCatRapida = document.getElementById("btn-nueva-cat-rapida");
   var btnCerrarCatRapida = document.getElementById("btn-cerrar-cat-rapida");
@@ -284,9 +253,6 @@
     });
   }
 
-  // =========================================================================
-  // GESTIÓN DE IMAGEN DE PORTADA
-  // =========================================================================
   tabUpload.addEventListener("click", function () {
     tabUpload.classList.add("active");
     tabUrl.classList.remove("active");
@@ -377,12 +343,10 @@
   }
 
   async function obtenerUrlImagenFinal() {
-    // 1. Si el usuario ingresó una URL directa, usarla
     if (urlImagenIngresada) {
       return urlImagenIngresada;
     }
 
-    // 2. Si seleccionó un archivo, intentar subir a Supabase Storage
     if (archivoImagenSeleccionado) {
       try {
         var ext = archivoImagenSeleccionado.name.split(".").pop();
@@ -404,7 +368,6 @@
         return data.publicUrl;
       } catch (err) {
         console.warn("No se pudo subir la imagen al bucket 'imagenes':", err.message);
-        // Fallback robusto a Base64 para que el usuario NUNCA pierda su trabajo
         showToast(
           "Aviso sobre Imagen",
           "El bucket 'imagenes' no está configurado en Supabase. Se guardará la imagen en formato base64.",
@@ -417,9 +380,6 @@
     return "";
   }
 
-  // =========================================================================
-  // VISTA PREVIA DEL LECTOR (MODAL INTERACTIVO)
-  // =========================================================================
   var modalPreview = document.getElementById("modalPreview");
   var btnVistaPrevia = document.getElementById("btn-vista-previa");
   var btnCerrarPreview = document.getElementById("btn-cerrar-preview");
@@ -470,9 +430,6 @@
     });
   }
 
-  // =========================================================================
-  // GUARDAR NOTICIA EN SUPABASE
-  // =========================================================================
   async function guardarNoticia(estado) {
     var titulo = inputTitulo.value.trim();
     var subtitulo = inputSubtitulo.value.trim();
@@ -482,7 +439,6 @@
     var checkDestacada = document.getElementById("es-destacada");
     var esDestacada = checkDestacada ? checkDestacada.checked : false;
 
-    // Validación de campos obligatorios
     if (!titulo) {
       showToast("Campo requerido", "Por favor ingresa un título para la noticia.", "error");
       inputTitulo.focus();
@@ -507,7 +463,6 @@
       return;
     }
 
-    // Actualizar botones a estado de carga
     var btnPub = document.getElementById("btn-publicar");
     var btnPubMobile = document.getElementById("btn-publicar-mobile");
     var btnPubSide = document.getElementById("btn-sidebar-publicar");
@@ -524,21 +479,18 @@
     }
 
     try {
-      // 1. Obtener URL de imagen
       var imagenFinalUrl = await obtenerUrlImagenFinal();
 
-      // 2. Generar slug único
       var slug = slugText.textContent !== "..." ? slugText.textContent : generarSlug(titulo);
 
-      // 3. Preparar payload respetando exactamente el esquema de la tabla 'noticias'
       var payload = {
         titulo: titulo,
         subtitulo: subtitulo,
-        categoria_id: parseInt(categoriaId, 10), // ¡Columna categoria_id en Supabase!
+        categoria_id: parseInt(categoriaId, 10),
         contenido: contenidoHtml,
         imagen_url: imagenFinalUrl || "",
         slug: slug,
-        estado: estado, // 'publicado' o 'borrador'
+        estado: estado,
         publicado_en: estado === "publicado" ? new Date().toISOString() : null,
         es_destacada: esDestacada
       };
@@ -619,7 +571,6 @@
 
   }
 
-  // Event listeners para los botones de guardar
   document.getElementById("btn-publicar").addEventListener("click", function () { guardarNoticia("publicado"); });
   document.getElementById("btn-sidebar-publicar").addEventListener("click", function () { guardarNoticia("publicado"); });
   var btnPubMob = document.getElementById("btn-publicar-mobile");
@@ -628,7 +579,6 @@
   document.getElementById("btn-borrador").addEventListener("click", function () { guardarNoticia("borrador"); });
   document.getElementById("btn-sidebar-borrador").addEventListener("click", function () { guardarNoticia("borrador"); });
 
-  // Escape para cerrar modales
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
       cerrarVistaPrevia();
@@ -636,11 +586,6 @@
     }
   });
 
-  // =========================================================================
-  // CONTROL DE ACCESO
-  // NOTA: Esto es control de interfaz. La seguridad real y definitiva
-  // la garantiza el RLS de Supabase en la base de datos.
-  // =========================================================================
   async function verificarAccesoAdmin() {
     if (!window.supabase) {
       window.location.replace("latinos-en-pelota.html");
@@ -679,7 +624,6 @@
     }
   }
 
-  // Logout en crear-noticia
   var cnBtnLogout = document.getElementById("cn-btnLogout");
   if (cnBtnLogout) {
     cnBtnLogout.addEventListener("click", async function () {
@@ -690,7 +634,6 @@
     });
   }
 
-  // Cargar noticia en modo edición
   async function cargarNoticiaParaEdicion(id) {
     var idNum = parseInt(id, 10);
     if (isNaN(idNum) || idNum <= 0 || String(idNum) !== String(id).trim()) {
@@ -779,7 +722,6 @@
     }
   }
 
-  // Inicializar
   async function init() {
     var esAdmin = await verificarAccesoAdmin();
     if (!esAdmin) return;

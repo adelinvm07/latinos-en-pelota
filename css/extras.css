@@ -1,0 +1,129 @@
+.ck-banner {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1100;
+  width: min(28rem, calc(100% - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px solid #dce0e7;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #1a2333;
+  box-shadow: 0 8px 28px rgba(15, 26, 46, 0.22);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.ck-banner h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.ck-banner p {
+  margin: 0 0 1rem;
+}
+
+.ck-banner a,
+.priv-login a {
+  text-decoration: underline;
+}
+
+.ck-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ck-boton {
+  padding: 0.55rem 0.9rem;
+  border: 1px solid #637084;
+  border-radius: 0.35rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ck-boton:focus-visible {
+  outline: 2px solid #235a98;
+  outline-offset: 3px;
+}
+
+.ck-aceptar {
+  background: #0f1a2e;
+  color: #fff;
+}
+
+.ck-rechazar {
+  background: #fff;
+  color: #0f1a2e;
+}
+
+.priv-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-card);
+}
+
+.priv-header {
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  padding-inline: clamp(1rem, 4vw, 2rem);
+}
+
+.priv-logo {
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 2px solid var(--yellow);
+  border-radius: 50%;
+  background: #fff;
+  object-fit: contain;
+}
+
+.priv-header .brand-name p,
+.priv-inicio {
+  color: #dbe3f0;
+}
+
+.priv-header .brand-name .priv-marca {
+  color: var(--text-light);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.priv-inicio {
+  text-decoration: underline;
+}
+
+.priv-contenido {
+  flex: 1;
+  width: min(100% - 2rem, 46rem);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 3rem) 0;
+}
+
+.priv-contenido h1,
+.priv-contenido h2 {
+  color: var(--navy);
+  line-height: 1.2;
+}
+
+.priv-contenido h2 {
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.priv-contenido p {
+  margin: 0.75rem 0;
+}
+
+.priv-contenido section {
+  margin-top: 1.75rem;
+}
+
+.priv-login {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}

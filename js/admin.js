@@ -1,12 +1,7 @@
-/**
- * Latinos en Pelota — Lógica del Panel de Administración
- * Autenticación de Administrador, Gestión de Categorías y Noticias con Supabase.
- */
 
 (function () {
   "use strict";
 
-  // Estado global de la vista
   var state = {
     section: "resumen",
     noticiasQuery: "",
@@ -27,8 +22,9 @@
   var categorias = [];
   var noticias = [];
   var anuncios = [];
+  var adminId = null;
+  var usuariosOcupado = false;
 
-  // Paleta de colores para las tarjetas de categorías
   var catPalette = [
     "var(--accent)",
     "var(--blue)",
@@ -47,9 +43,6 @@
     { id: 4, autor: "Yesenia Paulino", texto: "Ojalá el Cibao FC pueda sostener este nivel en la liguilla.", articulo: "Cibao FC se corona campeón", fecha: "2026-09-02", estado: "aprobado" }
   ];
 
-  // =========================================================================
-  // SISTEMA DE NOTIFICACIONES TOAST
-  // =========================================================================
   function showToast(title, message, type) {
     type = type || "info";
     var container = document.getElementById("toast-container");
@@ -86,9 +79,6 @@
     }, 4500);
   }
 
-  // =========================================================================
-  // HELPERS
-  // =========================================================================
   function escapeHtml(str) {
     if (!str) return "";
     return String(str)
@@ -111,19 +101,14 @@
     return d.getDate() + " " + meses[d.getMonth()] + " " + d.getFullYear();
   }
 
-  // =========================================================================
-  // AUTENTICACIÓN Y CONTROL DE ACCESO
-  // NOTA: Esto es control de interfaz. La seguridad real y definitiva
-  // la garantiza el RLS de Supabase en la base de datos.
-  // =========================================================================
   async function verificarSesion() {
     if (!window.supabase) return false;
 
+    var loginScreen = document.getElementById("adminLoginScreen");
     try {
       var { data, error } = await window.supabase.auth.getSession();
       if (error) throw error;
 
-      var loginScreen = document.getElementById("adminLoginScreen");
       var appContainer = document.getElementById("adminAppContainer");
       var btnAdminPublico = document.getElementById("btnPanelAdmin");
       var session = data ? data.session : null;
@@ -135,23 +120,24 @@
         return false;
       }
 
-      var user = session.user;
+      var { data: actualizada, error: errorRenovacion } = await window.supabase.auth.refreshSession();
+      if (errorRenovacion) throw errorRenovacion;
+      var user = actualizada.session?.user;
       var esAdmin = user && user.app_metadata && user.app_metadata.role === "admin";
 
       if (!esAdmin) {
-        // Si no posee rol admin, redirigir al portal público antes de renderizar nada
         if (btnAdminPublico) btnAdminPublico.style.display = "none";
         window.location.replace("latinos-en-pelota.html");
         return false;
       }
 
-      // Usuario autenticado como administrador
       if (btnAdminPublico) btnAdminPublico.style.display = "inline-block";
       if (loginScreen) loginScreen.style.display = "none";
       if (appContainer) appContainer.style.display = "";
 
+      adminId = user.id;
       var email = user.email || "";
-      var userName = email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "Administrador";
+      var userName = user.user_metadata?.nombre || (email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "Administrador");
 
       var nameEl = document.getElementById("userNameDisplay");
       var emailEl = document.getElementById("userEmailDisplay");
@@ -164,6 +150,7 @@
       return true;
     } catch (err) {
       console.warn("Error al verificar sesión:", err);
+      if (loginScreen) loginScreen.style.display = "flex";
       return false;
     }
   }
@@ -175,53 +162,102 @@
     var errorEl = document.getElementById("loginErrorMsg");
     var btnSubmit = document.getElementById("btnLoginSubmit");
 
+    var btnRegistro = document.getElementById("btnRegistro");
+    var aviso = document.getElementById("registroAviso");
+
     if (form) {
+      var registrar = false;
+      var nombreGrupo = document.getElementById("registroNombreGrupo");
+      var nombreInput = document.getElementById("registroNombre");
+
+      btnRegistro.addEventListener("click", function () {
+        registrar = !registrar;
+        nombreGrupo.hidden = !registrar;
+        nombreInput.required = registrar;
+        passInput.autocomplete = registrar ? "new-password" : "current-password";
+        btnSubmit.textContent = registrar ? "Crear cuenta" : "Iniciar sesión";
+        btnRegistro.textContent = registrar ? "Volver al inicio de sesión" : "Crear cuenta";
+        errorEl.style.display = "none";
+        aviso.hidden = true;
+        if (registrar) nombreInput.focus();
+      });
+
       form.addEventListener("submit", async function (e) {
         e.preventDefault();
+        var nombre = nombreInput.value.trim();
         var email = emailInput.value.trim();
-        var pass = passInput.value.trim();
+        var pass = passInput.value;
+
+        errorEl.style.display = "none";
+        aviso.hidden = true;
 
         if (!email || !pass) return;
 
+        if (registrar && (nombre.length < 2 || nombre.length > 40)) {
+          errorEl.textContent = "Elige un nombre de usuario de 2 a 40 caracteres.";
+          errorEl.style.display = "block";
+          return;
+        }
+
+        if (registrar && pass.length < 6) {
+          errorEl.textContent = "Usa una contraseña de al menos 6 caracteres.";
+          errorEl.style.display = "block";
+          return;
+        }
+
+        var botonActivo = btnSubmit;
+        var textoOriginal = botonActivo.textContent;
         btnSubmit.disabled = true;
-        btnSubmit.textContent = "Verificando...";
-        errorEl.style.display = "none";
+        btnRegistro.disabled = true;
+        botonActivo.textContent = registrar ? "Creando cuenta..." : "Verificando...";
 
         try {
-          var { data: loginData, error: loginError } = await window.supabase.auth.signInWithPassword({
-            email: email,
-            password: pass
-          });
+          var auth = window.supabase.auth;
+          var credenciales = { email: email, password: pass };
+          var { data, error } = registrar
+            ? await auth.signUp({
+              ...credenciales,
+              options: {
+                data: { nombre: nombre },
+                emailRedirectTo: new URL("latinos-en-pelota.html", window.location.href).href
+              }
+            })
+            : await auth.signInWithPassword(credenciales);
 
-          if (loginError) throw loginError;
+          if (error) throw error;
 
-          var user = loginData && loginData.user;
-          var esAdmin = user && user.app_metadata && user.app_metadata.role === "admin";
-
-          if (!esAdmin) {
-            await window.supabase.auth.signOut();
-            throw new Error("Acceso denegado: tu cuenta no posee privilegios de administrador.");
+          if (registrar && !data.session) {
+            aviso.textContent = "Revisa tu correo para confirmar tu cuenta. Si ya tienes una cuenta, inicia sesión.";
+            aviso.hidden = false;
+            return;
           }
 
-          showToast("Acceso Concedido", "Sesión iniciada correctamente.", "success");
-          await verificarSesion();
-          await cargarCategoriasDesdeSupabase();
-          await cargarNoticiasDesdeSupabase();
+          if (data.session.user.app_metadata?.role === "admin") {
+            window.location.reload();
+          } else {
+            window.location.replace("latinos-en-pelota.html");
+          }
         } catch (err) {
           console.error("Error de autenticación:", err);
-          var msg = err.message || "Correo o contraseña incorrectos. Solo el personal autorizado puede acceder.";
-          errorEl.textContent = msg;
+          var mensajes = {
+            invalid_credentials: "El correo o la contraseña son incorrectos.",
+            user_already_exists: "Este correo ya está registrado. Inicia sesión.",
+            email_exists: "Este correo ya está registrado. Inicia sesión.",
+            email_not_confirmed: "Confirma tu correo antes de iniciar sesión.",
+            weak_password: "La contraseña es demasiado corta o no cumple los requisitos de seguridad."
+          };
+          errorEl.textContent = mensajes[err.code] || (registrar
+            ? "No se pudo crear la cuenta. Inténtalo de nuevo."
+            : "No se pudo iniciar sesión. Inténtalo de nuevo.");
           errorEl.style.display = "block";
-          errorEl.style.color = "var(--danger)";
-          errorEl.style.background = "var(--danger-soft)";
         } finally {
           btnSubmit.disabled = false;
-          btnSubmit.textContent = "Iniciar Sesión";
+          btnRegistro.disabled = false;
+          botonActivo.textContent = textoOriginal;
         }
       });
     }
 
-    // Botón de Cerrar Sesión
     var btnLogout = document.getElementById("btnLogout");
     if (btnLogout) {
       btnLogout.addEventListener("click", async function () {
@@ -233,40 +269,22 @@
     }
   }
 
-  // =========================================================================
-  // CONEXIÓN CON SUPABASE: CARGA DE CATEGORÍAS Y NOTICIAS
-  // =========================================================================
   async function cargarCategoriasDesdeSupabase() {
     if (!window.supabase) return;
 
     try {
-      // 1. Obtener todas las categorías ordenadas por nombre
-      var { data: catData, error: catError } = await window.supabase
-        .from("categorias")
-        .select("id, nombre")
+      var { data, error } = await window.supabase
+        .from("categorias_con_conteo_noticias")
+        .select("id, nombre, total_noticias")
         .order("nombre", { ascending: true });
 
-      if (catError) throw catError;
+      if (error) throw error;
 
-      // 2. Obtener conteo de noticias por categoría
-      var { data: notiData, error: notiError } = await window.supabase
-        .from("noticias")
-        .select("id, categoria_id");
-
-      var countMap = {};
-      if (notiData) {
-        notiData.forEach(function (n) {
-          if (n.categoria_id) {
-            countMap[n.categoria_id] = (countMap[n.categoria_id] || 0) + 1;
-          }
-        });
-      }
-
-      categorias = (catData || []).map(function (cat, idx) {
+      categorias = (data || []).map(function (cat, idx) {
         return {
           id: cat.id,
           nombre: cat.nombre,
-          count: countMap[cat.id] || 0,
+          count: Number(cat.total_noticias),
           color: catPalette[idx % catPalette.length]
         };
       });
@@ -303,7 +321,7 @@
           subtitulo: item.subtitulo || "",
           categoria: catNombre,
           categoria_id: item.categoria_id,
-          estado: item.estado ? (item.estado.charAt(0).toUpperCase() + item.estado.slice(1).toLowerCase()) : "Publicado",
+          estado: item.estado === "publicado" ? "Publicado" : "Borrador",
           fecha: item.publicado_en ? item.publicado_en.split("T")[0] : "",
           slug: item.slug
         };
@@ -318,9 +336,6 @@
     }
   }
 
-  // =========================================================================
-  // GESTIÓN DE CATEGORÍAS (CRUD CON SUPABASE)
-  // =========================================================================
   window.abrirModalNuevaCategoria = function () {
     state.editingCatId = null;
     document.getElementById("modalCatTitulo").textContent = "Nueva Categoría";
@@ -369,7 +384,6 @@
 
     try {
       if (state.editingCatId) {
-        // Modificar categoría existente
         var { error } = await window.supabase
           .from("categorias")
           .update({ nombre: nombre })
@@ -378,7 +392,6 @@
         if (error) throw error;
         showToast("Éxito", 'Categoría "' + nombre + '" actualizada.', "success");
       } else {
-        // Crear nueva categoría
         var { error: insertError } = await window.supabase
           .from("categorias")
           .insert([{ nombre: nombre }]);
@@ -455,9 +468,6 @@
     }
   }
 
-  // =========================================================================
-  // RENDER: RESUMEN
-  // =========================================================================
   function renderResumenStats() {
     var statNoticias = document.getElementById("statNoticias");
     var statComentarios = document.getElementById("statComentarios");
@@ -466,9 +476,6 @@
     if (statComentarios) statComentarios.textContent = fmt(state.comentariosPendientesTotal);
   }
 
-  // =========================================================================
-  // RENDER: CATEGORÍAS
-  // =========================================================================
   var MAX_COBERTURA = 5; // se muestran las 4 categorías con más noticias y el resto como "Otras"
 
   // Método del mayor resto: los porcentajes enteros suman exactamente 100
@@ -546,9 +553,6 @@
     }).join("");
   }
 
-  // =========================================================================
-  // RENDER: CATEGORÍAS
-  // =========================================================================
 
   function renderCategorias() {
     var grid = document.getElementById("categoriasGrid");
@@ -600,9 +604,6 @@
     sel.value = current || "todas";
   }
 
-  // =========================================================================
-  // RENDER: NOTICIAS
-  // =========================================================================
   function filteredNoticias() {
     var q = state.noticiasQuery.trim().toLowerCase();
     return noticias.filter(function (item) {
@@ -628,7 +629,7 @@
         '<tr><td colspan="6"><div class="empty-state">' +
         '<div class="empty-state-icon">📰</div>' +
         '<h3>No se encontraron noticias</h3>' +
-        '<p>' + (noticias.length === 0 ? "Aún no hay noticias creadas en la base de datos." : "No hay noticias que coincidan con el filtro actual.") + '</p>' +
+        '<p>' + (noticias.length === 0 ? "Aún no hay noticias." : "No hay noticias que coincidan con el filtro actual.") + '</p>' +
         (noticias.length === 0 ? '<a href="crear-noticia.html" class="btn btn-primary" style="margin-top:10px;">+ Crear Primera Noticia</a>' : '') +
         '</div></td></tr>';
     } else {
@@ -720,9 +721,6 @@
     }
   }
 
-  // =========================================================================
-  // GESTIÓN Y RENDER: COMENTARIOS
-  // =========================================================================
   async function cargarComentariosDesdeSupabase() {
     if (!window.supabase) return;
     try {
@@ -795,7 +793,7 @@
       return !query || [c.autor, c.texto, c.articulo].some(function (v) { return (v || "").toLowerCase().indexOf(query) !== -1; });
     });
     if (!filtrados.length) {
-      var mensaje = query ? "Ningún comentario coincide con la búsqueda." : comentarios.length ? "Todavía no hay comentarios " + (state.comentariosTab === "pendiente" ? "pendientes." : "aprobados.") : "No hay comentarios registrados en la base de datos.";
+      var mensaje = query ? "Ningún comentario coincide con la búsqueda." : comentarios.length ? "Todavía no hay comentarios " + (state.comentariosTab === "pendiente" ? "pendientes." : "aprobados.") : "Aún no hay comentarios.";
       list.innerHTML = '<div class="empty-state"><p>' + mensaje + '</p></div>';
       return;
     }
@@ -809,9 +807,6 @@
 
   window.aprobarComentarioAdmin = aprobarComentario;
 
-  // =========================================================================
-  // NAV BADGES & SECCIÓN
-  // =========================================================================
   function updateNavBadges() {
     var bNoti = document.getElementById("badgeNoticias");
     var bCat = document.getElementById("badgeCategorias");
@@ -830,6 +825,7 @@
     categorias: { title: "Gestión de Categorías", subtitle: "Organiza las secciones deportivas", search: "Buscar categoría...", action: "Nueva categoría" },
     comentarios: { title: "Comentarios", subtitle: "Moderación de comentarios", search: "Buscar comentario...", action: null },
     anuncios: { title: "Gestión de Publicidad", subtitle: "Banners y espacios patrocinados", search: "Buscar anuncio...", action: "Nuevo anuncio" },
+    usuarios: { title: "Usuarios", subtitle: "Administra los permisos de las cuentas", search: "Buscar por correo...", action: null },
     trafico: { title: "Tráfico del sitio", subtitle: "Estadísticas y analítica", search: "Buscar...", action: null }
   };
 
@@ -851,7 +847,7 @@
     if (pageTitle) pageTitle.textContent = meta.title;
     if (pageSub) {
       pageSub.textContent =
-        name === "noticias" ? fmt(state.noticiasTotal) + " noticias en base de datos" :
+        name === "noticias" ? fmt(state.noticiasTotal) + " noticias en total" :
         name === "categorias" ? fmt(categorias.length) + " categorías activas" :
         name === "anuncios" ? fmt(anuncios.length) + " anuncios configurados" :
         meta.subtitle;
@@ -893,14 +889,110 @@
     if (name === "categorias") renderCategorias();
     if (name === "comentarios") { state.comentariosQuery = ""; renderComentarios(); }
     if (name === "anuncios") renderAnuncios();
+    if (name === "usuarios") cargarUsuarios();
 
     var sidebar = document.getElementById("sidebar");
     if (sidebar) sidebar.classList.remove("open");
   }
 
-  // =========================================================================
-  // GESTIÓN DE ANUNCIOS (PUBLICIDAD)
-  // =========================================================================
+  function filtrarUsuarios(query) {
+    document.querySelectorAll("#usuariosBody tr").forEach(function (fila) {
+      fila.hidden = !fila.cells[0].textContent.toLowerCase().includes(query);
+    });
+  }
+
+  async function cargarUsuarios() {
+    if (!adminId || usuariosOcupado) return;
+
+    var body = document.getElementById("usuariosBody");
+    var aviso = document.getElementById("usuariosAviso");
+    usuariosOcupado = true;
+    body.textContent = "";
+    aviso.textContent = "Cargando usuarios...";
+
+    try {
+      var { data, error } = await window.supabase.rpc("listar_usuarios");
+      if (error) throw error;
+
+      data.forEach(function (usuario) {
+        var fila = body.insertRow();
+        fila.insertCell().textContent = usuario.email || usuario.id;
+        var rol = fila.insertCell();
+        if (usuario.rol === "owner") {
+          rol.textContent = "Propietario";
+          fila.insertCell().textContent = "Rol protegido";
+          return;
+        }
+
+        rol.textContent = usuario.rol === "admin" ? "Administrador" : "Usuario";
+        var boton = document.createElement("button");
+        var esAdmin = usuario.rol === "admin";
+        boton.type = "button";
+        boton.className = esAdmin ? "btn-text danger" : "btn-text";
+        boton.textContent = esAdmin ? "Quitar admin" : "Dar admin";
+        boton.addEventListener("click", function () {
+          cambiarRolUsuario(usuario, boton);
+        });
+        fila.insertCell().appendChild(boton);
+      });
+
+      var busqueda = document.getElementById("searchInput");
+      if (state.section === "usuarios" && busqueda) {
+        filtrarUsuarios(busqueda.value.toLowerCase().trim());
+      }
+      aviso.textContent = data.length ? "" : "No hay usuarios registrados.";
+    } catch (err) {
+      console.error("Error al cargar usuarios:", err);
+      aviso.textContent = "No se pudieron cargar los usuarios.";
+    } finally {
+      usuariosOcupado = false;
+    }
+  }
+
+  async function cambiarRolUsuario(usuario, boton) {
+    if (usuariosOcupado || usuario.rol === "owner") return;
+
+    var rol = usuario.rol === "admin" ? "user" : "admin";
+    var accion = rol === "admin" ? "dar permisos de administrador a " : "quitar los permisos de administrador a ";
+    if (!confirm("¿Quieres " + accion + (usuario.email || usuario.id) + "?")) return;
+
+    usuariosOcupado = true;
+    boton.disabled = true;
+
+    try {
+      var { error } = await window.supabase.rpc("cambiar_rol_usuario", {
+        p_usuario_id: usuario.id,
+        p_rol: rol
+      });
+      if (error) throw error;
+
+      if (usuario.id === adminId && rol === "user") {
+        adminId = null;
+        document.getElementById("adminAppContainer").style.display = "none";
+        try {
+          var salida = await window.supabase.auth.signOut({ scope: "local" });
+          if (salida.error) throw salida.error;
+        } catch (err) {
+          console.error("Error al cerrar la sesión:", err);
+          alert("Tu rol cambió. Cierra sesión y vuelve a entrar para actualizar tus permisos.");
+        }
+        window.location.replace("latinos-en-pelota.html");
+        return;
+      }
+
+      showToast("Rol actualizado", "La cuenta debe cerrar sesión y volver a entrar para actualizar sus permisos.", "success");
+    } catch (err) {
+      console.error("Error al cambiar el rol:", err);
+      showToast("Error", err.message || "No se pudo cambiar el rol.", "error");
+      return;
+    } finally {
+      usuariosOcupado = false;
+      boton.disabled = false;
+    }
+
+    await cargarUsuarios();
+  }
+
   async function cargarAnunciosDesdeSupabase() {
     if (!window.supabase) return;
     try {
@@ -940,7 +1032,9 @@
       var toggleLabel = ad.activo ? "Pausar" : "Activar";
 
       return "<tr>" +
-        '<td style="width:70px;"><img src="' + escapeHtml(ad.imagen_url) + '" alt="' + escapeHtml(ad.titulo) + '" style="width:60px;height:40px;object-fit:cover;border-radius:4px;background:#000;" onerror="this.src=\'assets/Logo latinos .png\'"></td>' +
+        '<td style="width:70px;">' + (window.cookiesOpcionales
+          ? '<img src="' + escapeHtml(ad.imagen_url) + '" alt="' + escapeHtml(ad.titulo) + '" style="width:60px;height:40px;object-fit:cover;border-radius:4px;background:#000;" onerror="this.src=\'assets/Logo latinos .png\'">'
+          : "—") + '</td>' +
         '<td style="font-weight:700;">' + escapeHtml(ad.titulo) + '</td>' +
         '<td><span class="pill pill--accent">' + escapeHtml(ad.ubicacion || "sidebar") + '</span></td>' +
         '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer" style="color:var(--blue);font-size:12.5px;">' + escapeHtml(ad.enlace_url) + '</a></td>' +
@@ -1081,22 +1175,17 @@
     }
   };
 
-  // =========================================================================
-  // INICIALIZACIÓN Y EVENT LISTENERS
-  // =========================================================================
   document.addEventListener("DOMContentLoaded", async function () {
-    // 1. Configurar y verificar autenticación
     configurarLogin();
+    window.addEventListener("preferencias-cookies", renderAnuncios);
     var haySesion = await verificarSesion();
 
-    // 2. Navegación en sidebar
     document.querySelectorAll(".nav-item").forEach(function (item) {
       item.addEventListener("click", function () {
         if (item.dataset.section) setSection(item.dataset.section);
       });
     });
 
-    // 3. Menú móvil
     var menuToggle = document.getElementById("menuToggle");
     if (menuToggle) {
       menuToggle.addEventListener("click", function () {
@@ -1105,7 +1194,6 @@
       });
     }
 
-    // 4. Búsqueda
     var searchInput = document.getElementById("searchInput");
     if (searchInput) {
       searchInput.addEventListener("input", function (e) {
@@ -1117,6 +1205,8 @@
         } else if (state.section === "comentarios") {
           state.comentariosQuery = q;
           renderComentarios();
+        } else if (state.section === "usuarios") {
+          filtrarUsuarios(q);
         } else if (state.section === "categorias") {
           document.querySelectorAll("#categoriasGrid .cat-card").forEach(function (card, i) {
             if (!categorias[i]) return;
@@ -1127,7 +1217,6 @@
       });
     }
 
-    // 5. Filtros de Noticias
     var filtroCat = document.getElementById("filtroCategoria");
     if (filtroCat) {
       filtroCat.addEventListener("change", function (e) {
@@ -1153,7 +1242,6 @@
       });
     });
 
-    // 6. Paginación Noticias
     var prevBtn = document.getElementById("noticiasPrev");
     if (prevBtn) {
       prevBtn.addEventListener("click", function () {
@@ -1169,7 +1257,6 @@
       });
     }
 
-    // 7. Acciones en la tabla de noticias
     var notiBody = document.getElementById("noticiasBody");
     if (notiBody) {
       notiBody.addEventListener("click", function (e) {
@@ -1180,7 +1267,6 @@
       });
     }
 
-    // 8. Modal Categoría
     var formCat = document.getElementById("formCategoria");
     if (formCat) {
       formCat.addEventListener("submit", function (e) {
@@ -1194,7 +1280,6 @@
       btnConfirmDel.addEventListener("click", confirmarEliminarCategoria);
     }
 
-    // 9. Modal Anuncio
     var formAnun = document.getElementById("formAnuncio");
     if (formAnun) {
       formAnun.addEventListener("submit", function (e) {
@@ -1203,7 +1288,6 @@
       });
     }
 
-    // Cerrar modales con tecla Escape
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") {
         cerrarModalCategoria();
@@ -1212,7 +1296,6 @@
       }
     });
 
-    // Si hay sesión iniciada, cargar datos
     if (haySesion) {
       cargarCategoriasDesdeSupabase();
       cargarNoticiasDesdeSupabase();
@@ -1220,9 +1303,8 @@
       cargarAnunciosDesdeSupabase();
     }
 
-    // Comprobar parámetros de URL
     var params = new URLSearchParams(window.location.search);
-    if (params.get("seccion")) {
+    if (haySesion && params.get("seccion")) {
       setSection(params.get("seccion"));
     }
     if (params.get("creada") === "1") {

@@ -1,4 +1,3 @@
-// Página de lectura de una noticia: noticia.html?slug=titulo-noticia  (o ?id=123)
 (function () {
   "use strict";
 
@@ -22,7 +21,6 @@
     return "futbol-red";
   }
 
-  // Ej: 22 de octubre de 2026
   function formatearFecha(iso) {
     if (!iso) return "";
     var d = new Date(iso);
@@ -71,9 +69,6 @@
     inicializarComentarios(n.id);
   }
 
-  // =========================================================================
-  // GESTIÓN DE COMENTARIOS REALES (SUPABASE)
-  // =========================================================================
   async function inicializarComentarios(noticiaId) {
     var sesionUsuario = null;
     if (window.supabase && window.supabase.auth) {
@@ -108,8 +103,9 @@
     await cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2);
 
     if (window.supabase && window.supabase.auth && window.supabase.auth.onAuthStateChange) {
-      window.supabase.auth.onAuthStateChange(async function (_evento, nuevaSesion) {
+      window.supabase.auth.onAuthStateChange(async function (evento, nuevaSesion) {
         sesionUsuario = nuevaSesion;
+        if (evento === "USER_UPDATED") return;
         renderizarFormularioComentario(noticiaId, sesionUsuario, formBox);
         await cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2);
       });
@@ -157,6 +153,35 @@
 
     footer.appendChild(contador);
     footer.appendChild(btn);
+    var cambiarNombre = document.createElement("button");
+    cambiarNombre.type = "button";
+    cambiarNombre.className = "btn-borrar-comentario";
+    cambiarNombre.textContent = "Cambiar nombre de usuario";
+    cambiarNombre.addEventListener("click", async function () {
+      var actual = sesionUsuario.user.user_metadata?.nombre || sesionUsuario.user.user_metadata?.full_name || "";
+      var nombre = window.prompt("Elige el nombre que se mostrará en tus comentarios.", actual);
+      if (nombre === null) return;
+      nombre = nombre.trim();
+      if (nombre.length < 2 || nombre.length > 40) {
+        alert("El nombre debe tener de 2 a 40 caracteres.");
+        return;
+      }
+
+      cambiarNombre.disabled = true;
+      try {
+        var { data, error } = await window.supabase.auth.updateUser({ data: { nombre: nombre } });
+        if (error) throw error;
+        sesionUsuario.user = data.user;
+        cambiarNombre.textContent = "Cambiar nombre de usuario (" + nombre + ")";
+      } catch (err) {
+        console.error("Error al guardar el nombre:", err);
+        alert("No pudimos guardar tu nombre. Inténtalo de nuevo.");
+      } finally {
+        cambiarNombre.disabled = false;
+      }
+    });
+
+    form.appendChild(cambiarNombre);
     form.appendChild(textarea);
     form.appendChild(footer);
 
@@ -179,8 +204,8 @@
 
       try {
         var user = sesionUsuario.user;
-        var autor = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.nombre))
-          || (user.email ? user.email.split("@")[0] : "Lector");
+        var autor = (user.user_metadata && (user.user_metadata.nombre || user.user_metadata.full_name))
+          || "Lector";
 
         var { error } = await window.supabase
           .from("comentarios")
@@ -251,11 +276,11 @@
 
         var autorEl = document.createElement("span");
         autorEl.className = "comentario-autor";
-        autorEl.textContent = c.autor || "Anónimo"; // textContent seguro
+        autorEl.textContent = c.autor || "Anónimo";
 
         var fechaEl = document.createElement("span");
         fechaEl.className = "comentario-fecha";
-        fechaEl.textContent = formatearFecha(c.created_at); // textContent seguro
+        fechaEl.textContent = formatearFecha(c.created_at);
 
         headerEl.appendChild(autorEl);
         headerEl.appendChild(fechaEl);
@@ -263,7 +288,7 @@
 
         var textoEl = document.createElement("p");
         textoEl.className = "comentario-texto";
-        textoEl.textContent = c.contenido; // textContent seguro (evita XSS)
+        textoEl.textContent = c.contenido;
         itemEl.appendChild(textoEl);
 
         if (currentUser && (currentUser.id === c.user_id || esAdmin)) {

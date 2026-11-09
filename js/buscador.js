@@ -2,11 +2,11 @@
   "use strict";
 
   var todasLasNoticias = [];
-  var categoriaActiva = "Todas";
+  var categoriaActiva = null;
   var textoBusqueda = "";
   var filtroFechaActivo = "todas";
+  var visitaRegistrada = false;
 
-  // Elementos del DOM
   var contenedorTabs = document.getElementById("contenedor-tabs");
   var inputBusqueda = document.querySelector(".search-box input");
   var formBusqueda = document.querySelector(".search-box");
@@ -40,14 +40,11 @@
     return d.getDate() + " " + meses[d.getMonth()] + " " + d.getFullYear();
   }
 
-  // =========================================================================
-  // REQUISITO 2: MOSTRAR CARGA CON DISEÑO DE ESQUELETO (SKELETON LOADER)
-  // =========================================================================
   function renderizarSkeletons() {
     if (!gridNoticias) return;
     var skeletonHtml = '';
     for (var i = 0; i < 6; i++) {
-      skeletonHtml += 
+      skeletonHtml +=
         '<div class="skeleton-card">' +
           '<div class="skeleton-box skeleton-media"></div>' +
           '<div class="skeleton-box skeleton-tag"></div>' +
@@ -60,11 +57,11 @@
     gridNoticias.innerHTML = skeletonHtml;
   }
 
-  // =========================================================================
-  // CARGAR CATEGORÍAS REALES DESDE SUPABASE
-  // =========================================================================
   async function cargarCategorias() {
-    if (!window.supabase || !contenedorTabs) return;
+    if (!contenedorTabs) return;
+
+    var navControlsEl = contenedorTabs.querySelector(".nav-controls");
+    var mensaje;
 
     try {
       var { data, error } = await window.supabase
@@ -74,31 +71,27 @@
 
       if (error) throw error;
 
-      var navControlsEl = contenedorTabs.querySelector(".nav-controls");
-      var navControlsHtml = navControlsEl ? navControlsEl.outerHTML : "";
-
-      var htmlTabs = '<a href="#" class="active">Todas</a>';
-
       if (data && data.length > 0) {
         data.forEach(function (cat) {
-          htmlTabs += '<a href="#">' + escapeHtml(cat.nombre) + '</a>';
+          var tab = document.createElement("a");
+          tab.href = "#";
+          tab.dataset.categoriaId = cat.id;
+          tab.textContent = cat.nombre;
+          contenedorTabs.insertBefore(tab, navControlsEl);
         });
+      } else {
+        mensaje = "No hay categorías disponibles.";
       }
-
-      contenedorTabs.innerHTML = htmlTabs + navControlsHtml;
-
-      inputBusqueda = document.querySelector(".search-box input");
-      if (inputBusqueda) inputBusqueda.value = textoBusqueda;
-
-      selectFecha = document.getElementById("filtro-fecha");
-      if (selectFecha) selectFecha.value = filtroFechaActivo;
-
-      formBusqueda = document.querySelector(".search-box");
-
-      inicializarEventos();
-
     } catch (err) {
       console.error("Error al cargar categorías dinámicas desde Supabase:", err);
+      mensaje = "No se pudieron cargar las categorías.";
+    }
+
+    if (mensaje) {
+      var aviso = document.createElement("span");
+      aviso.setAttribute("role", "status");
+      aviso.textContent = mensaje;
+      contenedorTabs.insertBefore(aviso, navControlsEl);
     }
   }
 
@@ -111,9 +104,6 @@
       .replace(/"/g, "&quot;");
   }
 
-  // =========================================================================
-  // CARGAR NOTICIAS DESDE SUPABASE
-  // =========================================================================
   async function cargarNoticias() {
     if (!window.supabase) return;
 
@@ -122,9 +112,8 @@
 
     try {
       var { data, error } = await window.supabase
-        .from("noticias")
-        .select("id, slug, titulo, subtitulo, imagen_url, estado, publicado_en, es_destacada, categorias(id, nombre)")
-        .eq("estado", "publicado")
+        .from("noticias_publicadas")
+        .select("id, slug, titulo, subtitulo, imagen_url, publicado_en, es_destacada, categoria_id, categoria_nombre")
         .order("publicado_en", { ascending: false });
 
       if (error) throw error;
@@ -136,7 +125,8 @@
           titulo: item.titulo || "Sin título",
           subtitulo: item.subtitulo || "",
           imagen: item.imagen_url || IMAGEN_PLACEHOLDER,
-          categoria: item.categorias ? item.categorias.nombre : "General",
+          categoriaId: item.categoria_id == null ? null : String(item.categoria_id),
+          categoria: item.categoria_nombre ?? "General",
           fecha: formatearFecha(item.publicado_en),
           rawFecha: item.publicado_en ? new Date(item.publicado_en) : null,
           esDestacada: Boolean(item['es_destacada'])
@@ -148,22 +138,18 @@
     } catch (err) {
       console.error("Error cargando noticias desde Supabase:", err);
       if (gridNoticias) {
-        gridNoticias.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--red); padding: 40px 0;">Error al conectar con la base de datos.</p>';
+        gridNoticias.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--red); padding: 40px 0;">No se pudieron cargar las noticias.</p>';
       }
     }
   }
 
-  // =========================================================================
-  // FILTRADO Y RENDERIZADO CON TRANSICIÓN (REQUISITO 3)
-  // =========================================================================
   function aplicarFiltros() {
     if (!gridNoticias) return;
 
     var now = new Date();
 
     var noticiasFiltradas = todasLasNoticias.filter(function (noticia) {
-      var coincideCategoria = (categoriaActiva === "Todas") ||
-        (noticia.categoria.toLowerCase() === categoriaActiva.toLowerCase());
+      var coincideCategoria = categoriaActiva === null || noticia.categoriaId === categoriaActiva;
 
       var term = textoBusqueda.toLowerCase();
       var coincideTexto = !term ||
@@ -201,10 +187,11 @@
     if (!gridNoticias) return;
 
     var esFiltroAntiguo = ["mes_pasado", "hace_2_meses", "mas_2_meses"].indexOf(filtroFechaActivo) !== -1;
+
     var destacada = todasLasNoticias.find(function (n) { return n.esDestacada; }) || todasLasNoticias[0];
     var destacadaEnLista = destacada ? lista.find(function (n) { return n.id === destacada.id; }) : null;
 
-    var mostrarHero = (categoriaActiva === "Todas") &&
+    var mostrarHero = (categoriaActiva === null) &&
                       (textoBusqueda.length === 0) &&
                       !esFiltroAntiguo &&
                       !!destacadaEnLista;
@@ -243,7 +230,7 @@
       }
 
       var mensaje = todasLasNoticias.length === 0
-        ? "Aún no hay noticias publicadas en la base de datos."
+        ? "Aún no hay noticias publicadas."
         : 'No hay noticias que coincidan con los filtros seleccionados.';
 
       gridNoticias.innerHTML =
@@ -274,9 +261,6 @@
     }).join("");
   }
 
-  // =========================================================================
-  // EVENT LISTENERS
-  // =========================================================================
   function inicializarEventos() {
     if (formBusqueda) {
       formBusqueda.addEventListener("submit", function (e) {
@@ -291,7 +275,6 @@
       });
     }
 
-    selectFecha = document.getElementById("filtro-fecha");
     if (selectFecha) {
       selectFecha.addEventListener("change", function (e) {
         filtroFechaActivo = e.target.value;
@@ -305,30 +288,34 @@
         e.preventDefault();
         tabs.forEach(function (t) { t.classList.remove("active"); });
         this.classList.add("active");
-        categoriaActiva = this.textContent.trim();
+        categoriaActiva = this.dataset.categoriaId || null;
         aplicarFiltros();
       });
     });
   }
 
-  // =========================================================================
-  // CARGAR PUBLICIDAD (ANUNCIOS DINÁMICOS)
-  // =========================================================================
   async function cargarAnuncios() {
-    var asideSidebar = document.getElementById("sidebar-anuncios") || document.querySelector("aside.sidebar");
-    if (!asideSidebar || !window.supabase) return;
+    var asideSidebar = document.getElementById("sidebar-anuncios");
+    if (!asideSidebar) return;
+
+    if (!window.cookiesOpcionales) {
+      asideSidebar.textContent = "";
+      return;
+    }
+    if (!window.supabase) return;
 
     try {
       var { data, error } = await window.supabase
         .from("anuncios")
         .select("id, titulo, imagen_url, enlace_url, ubicacion, activo")
         .eq("activo", true)
+        .eq("ubicacion", "sidebar")
         .order("id", { ascending: true });
 
       if (error) throw error;
-      if (!data || data.length === 0) return;
+      if (!window.cookiesOpcionales) return;
 
-      asideSidebar.innerHTML = data.map(function (ad) {
+      asideSidebar.innerHTML = (data || []).map(function (ad) {
         return (
           '<div class="ad-card">' +
             '<div class="media">' +
@@ -350,13 +337,41 @@
     }
   }
 
+  function aplicarPreferenciasPortada() {
+    cargarAnuncios();
+
+    if (!window.cookiesOpcionales || visitaRegistrada) return;
+
+    try {
+      var sid = localStorage.getItem("sid");
+      if (!sid) {
+        sid = crypto.randomUUID();
+        localStorage.setItem("sid", sid);
+      }
+
+      visitaRegistrada = true;
+      fetch(SUPABASE_URL + "/rest/v1/visitas", {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal"
+        },
+        body: JSON.stringify({ ruta: location.pathname, sesion_id: sid }),
+        keepalive: true
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   async function iniciar() {
     if (typeof actualizarFechaCabecera === "function") {
       actualizarFechaCabecera();
     }
     await cargarCategorias();
+    inicializarEventos();
     await cargarNoticias();
-    await cargarAnuncios();
+    window.addEventListener("preferencias-cookies", aplicarPreferenciasPortada);
+    aplicarPreferenciasPortada();
   }
 
   if (document.readyState === "loading") {

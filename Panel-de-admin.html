@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="icon" type="image/png" href="assets/logo-latinos.png">
+<link rel="icon" type="image/png" href="assets/Logo latinos .png">
 <link rel="stylesheet" href="css/admin.css">
 <style>
   /* Ajustes complementarios específicos para tablas y gráficos del resumen */
@@ -91,19 +91,23 @@
   }
   .placeholder-panel strong { display: block; font-size: 16px; color: #fff; margin-bottom: 6px; }
 </style>
+<link rel="stylesheet" href="css/extras.css">
 </head>
 <body>
 
-<!-- =========================================================================
-     PANTALLA DE ACCESO RESTRINGIDO (LOGIN DE ADMINISTRADOR)
-     ========================================================================= -->
 <div id="adminLoginScreen" class="login-wrapper" style="display:none;">
   <div class="login-card">
     <div class="brand-mark" style="width:52px;height:52px;font-size:22px;margin:0 auto 16px;">LP</div>
     <h2>Latinos en Pelota</h2>
-    <p class="login-sub" id="loginSubText">Acceso exclusivo para administradores y redactores</p>
+    <p class="login-sub" id="loginSubText">Inicia sesión o crea tu cuenta.</p>
 
     <form id="adminLoginForm">
+      <div id="registroNombreGrupo" hidden>
+        <div class="form-group" style="text-align:left;">
+          <label class="form-label" for="registroNombre">Nombre de usuario</label>
+          <input type="text" id="registroNombre" class="input-control" autocomplete="nickname" maxlength="40">
+        </div>
+      </div>
       <div class="form-group" style="text-align:left;">
         <label class="form-label" for="loginEmail">Correo Electrónico</label>
         <input type="email" id="loginEmail" class="input-control" placeholder="Correo electrónico" required autocomplete="username">
@@ -114,21 +118,23 @@
         <input type="password" id="loginPassword" class="input-control" placeholder="Contraseña" required autocomplete="current-password">
       </div>
 
-      <p id="loginErrorMsg" style="color:var(--danger);font-size:13px;display:none;background:var(--danger-soft);padding:10px 12px;border-radius:6px;margin-bottom:14px;text-align:left;"></p>
+      <p id="loginErrorMsg" role="alert" style="color:var(--danger);font-size:13px;display:none;background:var(--danger-soft);padding:10px 12px;border-radius:6px;margin-bottom:14px;text-align:left;"></p>
 
       <button type="submit" class="btn btn-primary" id="btnLoginSubmit" style="width:100%;padding:12px;font-size:14.5px;">
         Iniciar Sesión
       </button>
+      <button type="button" class="btn btn-ghost" id="btnRegistro" style="margin-top:24px;">
+        Crear cuenta
+      </button>
+      <p id="registroAviso" role="status" hidden></p>
     </form>
+    <p class="priv-login"><a href="recuperar-contrasena.html">¿Olvidaste tu contraseña?</a></p>
+    <p class="priv-login"><a href="politica-de-privacidad.html">Política de privacidad</a></p>
   </div>
 </div>
 
-<!-- =========================================================================
-     INTERFAZ PRINCIPAL DEL PANEL
-     ========================================================================= -->
 <div class="app" id="adminAppContainer" style="display:none;">
 
-  <!-- Mobile Topbar -->
   <div class="mobile-topbar">
     <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -140,7 +146,6 @@
     <a href="crear-noticia.html" class="btn btn-primary btn-sm">+ Noticia</a>
   </div>
 
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <div class="brand-mark">LP</div>
@@ -150,7 +155,6 @@
       </div>
     </div>
 
-    <!-- Botón directo de acción rápida -->
     <a href="crear-noticia.html" class="sidebar-action-btn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
       Crear Noticia
@@ -185,12 +189,11 @@
 
     <div class="nav-group-label">Sistema</div>
  
-    <a href="https://supabase.com/dashboard/project/uoxtbzfmznnvhjdwdlrr/auth/users" target="_blank" rel="noopener noreferrer" class="nav-item" style="color:var(--text);font-weight:600;">
-      <span>👥 Gestionar Usuarios</span>
-      <span style="font-size:12px;color:var(--text-muted);">↗</span>
-    </a>
+    <button class="nav-item" data-section="usuarios">
+      <span>Usuarios</span>
+    </button>
 
-    <!-- Usuario autenticado con opción de Cerrar Sesión -->
+    <a href="politica-de-privacidad.html" class="nav-item">Política de privacidad</a>
     <div class="sidebar-foot" id="sidebarUserFoot">
       <div class="avatar" id="userAvatar">--</div>
       <div class="avatar-info" style="flex:1;overflow:hidden;">
@@ -203,11 +206,9 @@
     </div>
   </aside>
 
-  <!-- Main Content -->
   <main class="main">
     <div class="content">
 
-      <!-- Topbar Header -->
       <div class="topbar">
         <div class="topbar-titles">
           <h1 id="pageTitle">Resumen del sitio</h1>
@@ -219,7 +220,6 @@
         </div>
       </div>
 
-      <!-- ==================== SECCIÓN: RESUMEN ==================== -->
       <section class="section active" data-view="resumen">
         <div class="stat-grid">
           <div class="stat-card stat-card--hero">
@@ -264,7 +264,6 @@
         </div>
       </section>
 
-      <!-- ==================== SECCIÓN: NOTICIAS ==================== -->
       <section class="section" data-view="noticias">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
           <div class="filters-row" style="margin-bottom:0;">
@@ -304,9 +303,7 @@
         </div>
       </section>
 
-      <!-- ==================== SECCIÓN: CATEGORÍAS ==================== -->
       <section class="section" data-view="categorias">
-        <!-- Barra de acción de categorías -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;background:var(--surface);padding:16px 20px;border-radius:var(--radius);border:1px solid var(--border);">
           <div>
             <h3 style="font-size:16px;font-weight:700;">Categorías del Portal</h3>
@@ -324,7 +321,6 @@
         </div>
       </section>
 
-      <!-- ==================== SECCIÓN: COMENTARIOS ==================== -->
       <section class="section" data-view="comentarios">
         <div class="tabs">
           <button class="tab-btn active" data-tab="pendiente">Pendientes</button>
@@ -333,7 +329,6 @@
         <div class="comment-list" id="comentariosList"></div>
       </section>
 
-      <!-- ==================== SECCIÓN: PUBLICIDAD ==================== -->
       <section class="section" data-view="anuncios">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;background:var(--surface);padding:16px 20px;border-radius:var(--radius);border:1px solid var(--border);">
           <div>
@@ -364,18 +359,31 @@
         </div>
       </section>
 
-      <!-- Placeholders analítica -->
+      <section class="section" data-view="usuarios">
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Acciones</th>
+              </tr></thead>
+              <tbody id="usuariosBody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span id="usuariosAviso" role="status"></span>
+          </div>
+        </div>
+      </section>
+
       <section class="section" data-view="trafico"><div class="placeholder-panel"><strong>Tráfico del sitio</strong>Métricas en tiempo real próximamente.</div></section>
 
     </div>
   </main>
 </div>
 
-<!-- =========================================================================
-     MODALES DEL SISTEMA
-     ========================================================================= -->
 
-<!-- Modal: Crear / Editar Categoría -->
 <div class="modal-backdrop" id="modalCategoria">
   <div class="modal">
     <div class="modal-header">
@@ -399,7 +407,6 @@
   </div>
 </div>
 
-<!-- Modal: Confirmar Eliminación de Categoría -->
 <div class="modal-backdrop" id="modalEliminarCat">
   <div class="modal" style="max-width: 440px;">
     <div class="modal-header">
@@ -417,7 +424,6 @@
   </div>
 </div>
 
-<!-- Modal: Crear / Editar Anuncio -->
 <div class="modal-backdrop" id="modalAnuncio">
   <div class="modal" style="max-width: 500px;">
     <div class="modal-header">
@@ -459,12 +465,11 @@
   </div>
 </div>
 
-<!-- Contenedor para notificaciones Toast -->
 <div id="toast-container"></div>
 
-<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/consentimiento.js"></script>
 <script src="js/admin.js"></script>
 <script>
 function obtenerClienteSupabase() {
