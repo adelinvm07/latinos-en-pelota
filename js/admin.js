@@ -120,8 +120,6 @@
         return false;
       }
 
-      if (window.accesoSocial.volverANoticia()) return false;
-
       var { data: actualizada, error: errorRenovacion } = await window.supabase.auth.refreshSession();
       if (errorRenovacion) throw errorRenovacion;
       var user = actualizada.session?.user;
@@ -166,8 +164,6 @@
 
     var btnRegistro = document.getElementById("btnRegistro");
     var aviso = document.getElementById("registroAviso");
-    window.accesoSocial.montar(document.getElementById("accesoSocial"), [btnSubmit, btnRegistro]);
-    window.accesoSocial.mostrarErrorDeRetorno(errorEl);
 
     if (form) {
       var registrar = false;

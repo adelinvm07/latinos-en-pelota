@@ -122,10 +122,7 @@
       var promptEl = document.createElement("div");
       promptEl.className = "comentarios-login-prompt";
       promptEl.innerHTML = 'Para dejar un comentario, debes <a href="Panel-de-admin.html">iniciar sesión</a>.';
-      var acceso = document.createElement("div");
-      promptEl.appendChild(acceso);
       formBox.appendChild(promptEl);
-      window.accesoSocial.montar(acceso, [], true);
       return;
     }
 
