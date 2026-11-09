@@ -91,6 +91,7 @@
   }
   .placeholder-panel strong { display: block; font-size: 16px; color: #fff; margin-bottom: 6px; }
 </style>
+<link rel="stylesheet" href="css/extras.css">
 </head>
 <body>
 
@@ -124,6 +125,7 @@
       </button>
       <p id="registroAviso" role="status" hidden></p>
     </form>
+    <p class="priv-login"><a href="politica-de-privacidad.html">Política de privacidad</a></p>
   </div>
 </div>
 
@@ -194,6 +196,7 @@
     </button>
 
     <!-- Usuario autenticado con opción de Cerrar Sesión -->
+    <a href="politica-de-privacidad.html" class="nav-item">Política de privacidad</a>
     <div class="sidebar-foot" id="sidebarUserFoot">
       <div class="avatar" id="userAvatar">--</div>
       <div class="avatar-info" style="flex:1;overflow:hidden;">
@@ -486,6 +489,7 @@
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/consentimiento.js"></script>
 <script src="js/admin.js"></script>
 <script>
 function obtenerClienteSupabase() {

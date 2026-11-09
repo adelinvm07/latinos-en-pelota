@@ -1044,7 +1044,9 @@
       var toggleLabel = ad.activo ? "Pausar" : "Activar";
 
       return "<tr>" +
-        '<td style="width:70px;"><img src="' + escapeHtml(ad.imagen_url) + '" alt="' + escapeHtml(ad.titulo) + '" style="width:60px;height:40px;object-fit:cover;border-radius:4px;background:#000;" onerror="this.src=\'assets/Logo latinos .png\'"></td>' +
+        '<td style="width:70px;">' + (window.cookiesOpcionales
+          ? '<img src="' + escapeHtml(ad.imagen_url) + '" alt="' + escapeHtml(ad.titulo) + '" style="width:60px;height:40px;object-fit:cover;border-radius:4px;background:#000;" onerror="this.src=\'assets/Logo latinos .png\'">'
+          : "—") + '</td>' +
         '<td style="font-weight:700;">' + escapeHtml(ad.titulo) + '</td>' +
         '<td><span class="pill pill--accent">' + escapeHtml(ad.ubicacion || "sidebar") + '</span></td>' +
         '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer" style="color:var(--blue);font-size:12.5px;">' + escapeHtml(ad.enlace_url) + '</a></td>' +
@@ -1191,6 +1193,7 @@
   document.addEventListener("DOMContentLoaded", async function () {
     // 1. Configurar y verificar autenticación
     configurarLogin();
+    window.addEventListener("preferencias-cookies", renderAnuncios);
     var haySesion = await verificarSesion();
 
     // 2. Navegación en sidebar

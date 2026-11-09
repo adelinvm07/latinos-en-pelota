@@ -5,6 +5,7 @@
   var categoriaActiva = null;
   var textoBusqueda = "";
   var filtroFechaActivo = "todas";
+  var visitaRegistrada = false;
 
   // Elementos del DOM
   var contenedorTabs = document.getElementById("contenedor-tabs");
@@ -301,8 +302,14 @@
   // CARGAR PUBLICIDAD (ANUNCIOS DINÁMICOS)
   // =========================================================================
   async function cargarAnuncios() {
-    var asideSidebar = document.getElementById("sidebar-anuncios") || document.querySelector("aside.sidebar");
-    if (!asideSidebar || !window.supabase) return;
+    var asideSidebar = document.getElementById("sidebar-anuncios");
+    if (!asideSidebar) return;
+
+    if (!window.cookiesOpcionales) {
+      asideSidebar.textContent = "";
+      return;
+    }
+    if (!window.supabase) return;
 
     try {
       var { data, error } = await window.supabase
@@ -313,9 +320,9 @@
         .order("id", { ascending: true });
 
       if (error) throw error;
-      if (!data || data.length === 0) return;
+      if (!window.cookiesOpcionales) return;
 
-      asideSidebar.innerHTML = data.map(function (ad) {
+      asideSidebar.innerHTML = (data || []).map(function (ad) {
         return (
           '<div class="ad-card">' +
             '<div class="media">' +
@@ -337,6 +344,32 @@
     }
   }
 
+  function aplicarPreferenciasPortada() {
+    cargarAnuncios();
+
+    if (!window.cookiesOpcionales || visitaRegistrada) return;
+
+    try {
+      var sid = localStorage.getItem("sid");
+      if (!sid) {
+        sid = crypto.randomUUID();
+        localStorage.setItem("sid", sid);
+      }
+
+      visitaRegistrada = true;
+      fetch(SUPABASE_URL + "/rest/v1/visitas", {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal"
+        },
+        body: JSON.stringify({ ruta: location.pathname, sesion_id: sid }),
+        keepalive: true
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   async function iniciar() {
     if (typeof actualizarFechaCabecera === "function") {
       actualizarFechaCabecera();
@@ -344,7 +377,8 @@
     await cargarCategorias();
     inicializarEventos();
     await cargarNoticias();
-    await cargarAnuncios();
+    window.addEventListener("preferencias-cookies", aplicarPreferenciasPortada);
+    aplicarPreferenciasPortada();
   }
 
   if (document.readyState === "loading") {

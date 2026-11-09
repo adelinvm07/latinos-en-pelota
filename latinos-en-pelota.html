@@ -267,6 +267,7 @@
   }
   footer a{color:#c3cede;text-decoration:underline;}
 </style>
+<link rel="stylesheet" href="css/extras.css">
 </head>
 <body>
 
@@ -325,10 +326,11 @@
 
 <footer>
   © 2026 Portal deportivo · Todos los derechos reservados<br>
-  <a href="Panel-de-admin.html" id="enlaceCuenta">Iniciar sesión</a> · <a href="#">Política de privacidad</a> · <a href="#">Cookies</a>
+  <a href="Panel-de-admin.html" id="enlaceCuenta">Iniciar sesión</a> · <a href="politica-de-privacidad.html">Política de privacidad</a> · <a href="politica-de-privacidad.html#cookies">Cookies</a>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/consentimiento.js"></script>
 
 <!-- Control de interfaz: Mostrar acceso al panel solo a administradores autenticados.
      (Nota: Esto es solo para la interfaz de usuario; la seguridad real la garantiza el RLS en Supabase) -->
@@ -389,25 +391,6 @@
 </script>
 
 <script src="js/buscador.js"></script>
-
-<script>
-(function () {
-  try {
-    var sid = localStorage.getItem('sid');
-    if (!sid) { sid = crypto.randomUUID(); localStorage.setItem('sid', sid); }
-    fetch('https://uoxtbzfmznnvhjdwdlrr.supabase.co/rest/v1/visitas', {
-      method: 'POST',
-      headers: {
-        'apikey': 'sb_publishable_Ro3jxG0zgAYjJeaj97h02A_DcSYKCgh',
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({ ruta: location.pathname, sesion_id: sid }),
-      keepalive: true
-    }).catch(function () {});
-  } catch (e) {}
-})();
-</script>
 
 </body>
 </html>
