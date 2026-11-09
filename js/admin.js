@@ -917,8 +917,14 @@
       data.forEach(function (usuario) {
         var fila = body.insertRow();
         fila.insertCell().textContent = usuario.email || usuario.id;
-        fila.insertCell().textContent = usuario.rol === "admin" ? "Administrador" : "Usuario";
+        var rol = fila.insertCell();
+        if (usuario.rol === "owner") {
+          rol.textContent = "Propietario";
+          fila.insertCell().textContent = "Rol protegido";
+          return;
+        }
 
+        rol.textContent = usuario.rol === "admin" ? "Administrador" : "Usuario";
         var boton = document.createElement("button");
         var esAdmin = usuario.rol === "admin";
         boton.type = "button";
@@ -944,7 +950,7 @@
   }
 
   async function cambiarRolUsuario(usuario, boton) {
-    if (usuariosOcupado) return;
+    if (usuariosOcupado || usuario.rol === "owner") return;
 
     var rol = usuario.rol === "admin" ? "user" : "admin";
     var accion = rol === "admin" ? "dar permisos de administrador a " : "quitar los permisos de administrador a ";
