@@ -1361,3 +1361,70 @@
       btnAdmin.style.display = "none";
     }
   });
+
+  /* ==========================================
+   LÓGICA DE VISITAS Y GRÁFICOS (Panel Admin)
+   ========================================== */
+
+   function obtenerClienteSupabase() {
+  return window.supabaseClient || null;
+}
+
+function dibujarVisitas(valores, etiquetas) {
+  const X0 = 20, X1 = 580, Y_TOP = 20, Y_BASE = 230;
+  const mayor = Math.max(...valores, 1);
+  const paso = Math.pow(10, Math.floor(Math.log10(mayor)));
+  const max = Math.max(Math.ceil(mayor / paso) * paso, 3);
+  const x = i => X0 + (i * (X1 - X0)) / (valores.length - 1);
+  const y = v => Y_BASE - (v / max) * (Y_BASE - Y_TOP);
+  const fmt = v => (v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + 'k' : String(v));
+
+  let grid = '';
+  for (let i = 0; i <= 3; i++) {
+    const v = (max / 3) * (3 - i), yy = y(v);
+    grid += '<line x1="' + X0 + '" y1="' + yy + '" x2="' + X1 + '" y2="' + yy + '" stroke="var(--border)" stroke-width="1"/>' +
+            '<text x="0" y="' + (yy + 4) + '" font-size="11" fill="var(--text-muted)">' + fmt(Math.round(v)) + '</text>';
+  }
+  document.getElementById('chartGrid').innerHTML = grid;
+
+  const linea = 'M' + valores.map((v, i) => x(i) + ',' + y(v)).join(' L');
+  document.getElementById('chartLine').setAttribute('d', linea);
+  document.getElementById('chartArea').setAttribute('d', linea + ' L' + X1 + ',' + Y_BASE + ' L' + X0 + ',' + Y_BASE + ' Z');
+  document.getElementById('chartMeses').innerHTML = etiquetas.map((t, i) =>
+    '<text x="' + x(i) + '" y="248" font-size="10" text-anchor="middle" fill="var(--text-muted)">' + t + '</text>').join('');
+}
+
+async function cargarVisitas() {
+  const cli = obtenerClienteSupabase();
+  if (!cli) return console.warn('cargarVisitas: no se encontró window.supabaseClient');
+  const [r1, r2] = await Promise.all([cli.rpc('visitas_mensuales'), cli.rpc('visitas_hoy_ayer')]);
+  if (r1.error || r2.error) return console.error('cargarVisitas:', r1.error || r2.error);
+
+  const hoy = Number(r2.data[0].hoy), ayer = Number(r2.data[0].ayer);
+  document.getElementById('statVisitantes').textContent = hoy.toLocaleString('en-US');
+  const delta = ayer ? Math.round(((hoy - ayer) / ayer) * 100) : null;
+  document.getElementById('statVisitantesDelta').textContent =
+    delta === null ? 'Sin datos de ayer' : (delta >= 0 ? '+' : '') + delta + '% vs. ayer';
+
+  dibujarVisitas(
+    r1.data.map(m => Number(m.total)),
+    r1.data.map(m => new Date(m.mes + 'T00:00').toLocaleDateString('es', { month: 'short' }))
+  );
+}
+
+async function verificarYcargarVisitas() {
+  const cli = obtenerClienteSupabase();
+  if (!cli || !cli.auth) return;
+  const { data } = await cli.auth.getSession();
+  if (data && data.session && data.session.user && data.session.user.app_metadata && data.session.user.app_metadata.role === 'admin') {
+    cargarVisitas();
+  }
+}
+
+verificarYcargarVisitas();
+const _cliVisitas = obtenerClienteSupabase();
+if (_cliVisitas && _cliVisitas.auth) _cliVisitas.auth.onAuthStateChange((evento, sesion) => {
+  if ((evento === 'SIGNED_IN' || evento === 'INITIAL_SESSION') && sesion && sesion.user && sesion.user.app_metadata && sesion.user.app_metadata.role === 'admin') {
+    cargarVisitas();
+  }
+});
