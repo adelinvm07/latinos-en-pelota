@@ -362,7 +362,12 @@
 
     try {
       const { data: { session } } = await window.supabase.auth.getSession();
-      aplicarVisibilidadAdmin(session);
+      if (session) {
+        const { data, error } = await window.supabase.auth.refreshSession();
+        aplicarVisibilidadAdmin(error ? null : data.session);
+      } else {
+        aplicarVisibilidadAdmin(null);
+      }
 
       if (window.supabase.auth && window.supabase.auth.onAuthStateChange) {
         window.supabase.auth.onAuthStateChange((_evento, sesionActual) => {

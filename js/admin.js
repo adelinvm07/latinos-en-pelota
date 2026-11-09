@@ -122,7 +122,9 @@
 
       if (window.accesoSocial.volverANoticia()) return false;
 
-      var user = session.user;
+      var { data: actualizada, error: errorRenovacion } = await window.supabase.auth.refreshSession();
+      if (errorRenovacion) throw errorRenovacion;
+      var user = actualizada.session?.user;
       var esAdmin = user && user.app_metadata && user.app_metadata.role === "admin";
 
       if (!esAdmin) {
@@ -137,7 +139,7 @@
 
       adminId = user.id;
       var email = user.email || "";
-      var userName = email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "Administrador";
+      var userName = user.user_metadata?.nombre || (email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "Administrador");
 
       var nameEl = document.getElementById("userNameDisplay");
       var emailEl = document.getElementById("userEmailDisplay");
@@ -168,9 +170,25 @@
     window.accesoSocial.mostrarErrorDeRetorno(errorEl);
 
     if (form) {
+      var registrar = false;
+      var nombreGrupo = document.getElementById("registroNombreGrupo");
+      var nombreInput = document.getElementById("registroNombre");
+
+      btnRegistro.addEventListener("click", function () {
+        registrar = !registrar;
+        nombreGrupo.hidden = !registrar;
+        nombreInput.required = registrar;
+        passInput.autocomplete = registrar ? "new-password" : "current-password";
+        btnSubmit.textContent = registrar ? "Crear cuenta" : "Iniciar sesión";
+        btnRegistro.textContent = registrar ? "Volver al inicio de sesión" : "Crear cuenta";
+        errorEl.style.display = "none";
+        aviso.hidden = true;
+        if (registrar) nombreInput.focus();
+      });
+
       form.addEventListener("submit", async function (e) {
         e.preventDefault();
-        var registrar = e.submitter === btnRegistro;
+        var nombre = nombreInput.value.trim();
         var email = emailInput.value.trim();
         var pass = passInput.value;
 
@@ -179,13 +197,19 @@
 
         if (!email || !pass) return;
 
+        if (registrar && (nombre.length < 2 || nombre.length > 40)) {
+          errorEl.textContent = "Elige un nombre de usuario de 2 a 40 caracteres.";
+          errorEl.style.display = "block";
+          return;
+        }
+
         if (registrar && pass.length < 6) {
           errorEl.textContent = "Usa una contraseña de al menos 6 caracteres.";
           errorEl.style.display = "block";
           return;
         }
 
-        var botonActivo = registrar ? btnRegistro : btnSubmit;
+        var botonActivo = btnSubmit;
         var textoOriginal = botonActivo.textContent;
         btnSubmit.disabled = true;
         btnRegistro.disabled = true;
@@ -195,7 +219,13 @@
           var auth = window.supabase.auth;
           var credenciales = { email: email, password: pass };
           var { data, error } = registrar
-            ? await auth.signUp(credenciales)
+            ? await auth.signUp({
+              ...credenciales,
+              options: {
+                data: { nombre: nombre },
+                emailRedirectTo: new URL("latinos-en-pelota.html", window.location.href).href
+              }
+            })
             : await auth.signInWithPassword(credenciales);
 
           if (error) throw error;

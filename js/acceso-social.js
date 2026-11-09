@@ -76,8 +76,19 @@
         aviso.hidden = true;
         var controles = botones.concat(botonesFormulario);
         controles.forEach(function (control) { control.disabled = true; });
-        guardarRetorno(desdeNoticia ? window.location.pathname + window.location.search : null);
         try {
+          var respuesta = await fetch(SUPABASE_URL + "/auth/v1/settings", {
+            headers: { apikey: SUPABASE_ANON_KEY }
+          });
+          if (!respuesta.ok) throw new Error("No se pudo consultar la configuración de acceso.");
+          var configuracion = await respuesta.json();
+          if (!configuracion.external?.[proveedor.id]) {
+            aviso.textContent = "El acceso con " + proveedor.nombre + " aún no está disponible. Puedes usar tu correo.";
+            aviso.hidden = false;
+            return;
+          }
+
+          guardarRetorno(desdeNoticia ? window.location.pathname + window.location.search : null);
           var { error } = await window.supabase.auth.signInWithOAuth({
             provider: proveedor.id,
             options: { redirectTo: new URL("Panel-de-admin.html", window.location.href).href }
