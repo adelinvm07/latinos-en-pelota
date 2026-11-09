@@ -2,7 +2,7 @@
   "use strict";
 
   var todasLasNoticias = [];
-  var categoriaActiva = "Todas";
+  var categoriaActiva = null;
   var textoBusqueda = "";
   var filtroFechaActivo = "todas";
 
@@ -44,7 +44,10 @@
   // CARGAR CATEGORÍAS REALES DESDE SUPABASE
   // =========================================================================
   async function cargarCategorias() {
-    if (!window.supabase || !contenedorTabs) return;
+    if (!contenedorTabs) return;
+
+    var navControlsEl = contenedorTabs.querySelector(".nav-controls");
+    var mensaje;
 
     try {
       var { data, error } = await window.supabase
@@ -54,32 +57,27 @@
 
       if (error) throw error;
 
-      var navControlsEl = contenedorTabs.querySelector(".nav-controls");
-      var navControlsHtml = navControlsEl ? navControlsEl.outerHTML : "";
-
-      var htmlTabs = '<a href="#" class="active">Todas</a>';
-
       if (data && data.length > 0) {
         data.forEach(function (cat) {
-          htmlTabs += '<a href="#">' + escapeHtml(cat.nombre) + '</a>';
+          var tab = document.createElement("a");
+          tab.href = "#";
+          tab.dataset.categoriaId = cat.id;
+          tab.textContent = cat.nombre;
+          contenedorTabs.insertBefore(tab, navControlsEl);
         });
+      } else {
+        mensaje = "No hay categorías disponibles.";
       }
-
-      contenedorTabs.innerHTML = htmlTabs + navControlsHtml;
-
-      // Re-vincular los elementos del DOM y restaurar estado
-      inputBusqueda = document.querySelector(".search-box input");
-      if (inputBusqueda) inputBusqueda.value = textoBusqueda;
-
-      selectFecha = document.getElementById("filtro-fecha");
-      if (selectFecha) selectFecha.value = filtroFechaActivo;
-
-      formBusqueda = document.querySelector(".search-box");
-
-      inicializarEventos();
-
     } catch (err) {
       console.error("Error al cargar categorías dinámicas desde Supabase:", err);
+      mensaje = "No se pudieron cargar las categorías.";
+    }
+
+    if (mensaje) {
+      var aviso = document.createElement("span");
+      aviso.setAttribute("role", "status");
+      aviso.textContent = mensaje;
+      contenedorTabs.insertBefore(aviso, navControlsEl);
     }
   }
 
@@ -118,6 +116,7 @@
           titulo: item.titulo || "Sin título",
           subtitulo: item.subtitulo || "",
           imagen: item.imagen_url || IMAGEN_PLACEHOLDER,
+          categoriaId: item.categorias ? String(item.categorias.id) : null,
           categoria: item.categorias ? item.categorias.nombre : "General",
           fecha: formatearFecha(item.publicado_en),
           rawFecha: item.publicado_en ? new Date(item.publicado_en) : null,
@@ -145,8 +144,7 @@
 
     var noticiasFiltradas = todasLasNoticias.filter(function (noticia) {
       // 1. Filtro Categoría
-      var coincideCategoria = (categoriaActiva === "Todas") ||
-        (noticia.categoria.toLowerCase() === categoriaActiva.toLowerCase());
+      var coincideCategoria = categoriaActiva === null || noticia.categoriaId === categoriaActiva;
 
       // 2. Filtro Búsqueda
       var term = textoBusqueda.toLowerCase();
@@ -193,7 +191,7 @@
     var destacadaEnLista = destacada ? lista.find(function (n) { return n.id === destacada.id; }) : null;
 
     // El hero solo se muestra en "Todas", sin texto de búsqueda, con filtro reciente/este_mes/todas y si la destacada está en los resultados
-    var mostrarHero = (categoriaActiva === "Todas") &&
+    var mostrarHero = (categoriaActiva === null) &&
                       (textoBusqueda.length === 0) &&
                       !esFiltroAntiguo &&
                       !!destacadaEnLista;
@@ -281,7 +279,6 @@
       });
     }
 
-    selectFecha = document.getElementById("filtro-fecha");
     if (selectFecha) {
       selectFecha.addEventListener("change", function (e) {
         filtroFechaActivo = e.target.value;
@@ -295,7 +292,7 @@
         e.preventDefault();
         tabs.forEach(function (t) { t.classList.remove("active"); });
         this.classList.add("active");
-        categoriaActiva = this.textContent.trim();
+        categoriaActiva = this.dataset.categoriaId || null;
         aplicarFiltros();
       });
     });
@@ -345,6 +342,7 @@
       actualizarFechaCabecera();
     }
     await cargarCategorias();
+    inicializarEventos();
     await cargarNoticias();
     await cargarAnuncios();
   }
