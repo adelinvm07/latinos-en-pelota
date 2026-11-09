@@ -27,6 +27,8 @@
   var categorias = [];
   var noticias = [];
   var anuncios = [];
+  var adminId = null;
+  var usuariosOcupado = false;
 
   // Paleta de colores para las tarjetas de categorías
   var catPalette = [
@@ -150,6 +152,7 @@
       if (loginScreen) loginScreen.style.display = "none";
       if (appContainer) appContainer.style.display = "";
 
+      adminId = user.id;
       var email = user.email || "";
       var userName = email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "Administrador";
 
@@ -852,6 +855,7 @@
     categorias: { title: "Gestión de Categorías", subtitle: "Organiza las secciones deportivas", search: "Buscar categoría...", action: "Nueva categoría" },
     comentarios: { title: "Comentarios", subtitle: "Moderación de comentarios", search: "Buscar comentario...", action: null },
     anuncios: { title: "Gestión de Publicidad", subtitle: "Banners y espacios patrocinados", search: "Buscar anuncio...", action: "Nuevo anuncio" },
+    usuarios: { title: "Usuarios", subtitle: "Administra los permisos de las cuentas", search: "Buscar por correo...", action: null },
     trafico: { title: "Tráfico del sitio", subtitle: "Estadísticas y analítica", search: "Buscar...", action: null }
   };
 
@@ -915,9 +919,102 @@
     if (name === "categorias") renderCategorias();
     if (name === "comentarios") { state.comentariosQuery = ""; renderComentarios(); }
     if (name === "anuncios") renderAnuncios();
+    if (name === "usuarios") cargarUsuarios();
 
     var sidebar = document.getElementById("sidebar");
     if (sidebar) sidebar.classList.remove("open");
+  }
+
+  function filtrarUsuarios(query) {
+    document.querySelectorAll("#usuariosBody tr").forEach(function (fila) {
+      fila.hidden = !fila.cells[0].textContent.toLowerCase().includes(query);
+    });
+  }
+
+  async function cargarUsuarios() {
+    if (!adminId || usuariosOcupado) return;
+
+    var body = document.getElementById("usuariosBody");
+    var aviso = document.getElementById("usuariosAviso");
+    usuariosOcupado = true;
+    body.textContent = "";
+    aviso.textContent = "Cargando usuarios...";
+
+    try {
+      var { data, error } = await window.supabase.rpc("listar_usuarios");
+      if (error) throw error;
+
+      data.forEach(function (usuario) {
+        var fila = body.insertRow();
+        fila.insertCell().textContent = usuario.email || usuario.id;
+        fila.insertCell().textContent = usuario.rol === "admin" ? "Administrador" : "Usuario";
+
+        var boton = document.createElement("button");
+        var esAdmin = usuario.rol === "admin";
+        boton.type = "button";
+        boton.className = esAdmin ? "btn-text danger" : "btn-text";
+        boton.textContent = esAdmin ? "Quitar admin" : "Dar admin";
+        boton.addEventListener("click", function () {
+          cambiarRolUsuario(usuario, boton);
+        });
+        fila.insertCell().appendChild(boton);
+      });
+
+      var busqueda = document.getElementById("searchInput");
+      if (state.section === "usuarios" && busqueda) {
+        filtrarUsuarios(busqueda.value.toLowerCase().trim());
+      }
+      aviso.textContent = data.length ? "" : "No hay usuarios registrados.";
+    } catch (err) {
+      console.error("Error al cargar usuarios:", err);
+      aviso.textContent = "No se pudieron cargar los usuarios.";
+    } finally {
+      usuariosOcupado = false;
+    }
+  }
+
+  async function cambiarRolUsuario(usuario, boton) {
+    if (usuariosOcupado) return;
+
+    var rol = usuario.rol === "admin" ? "user" : "admin";
+    var accion = rol === "admin" ? "dar permisos de administrador a " : "quitar los permisos de administrador a ";
+    if (!confirm("¿Quieres " + accion + (usuario.email || usuario.id) + "?")) return;
+
+    usuariosOcupado = true;
+    boton.disabled = true;
+
+    try {
+      var { error } = await window.supabase.rpc("cambiar_rol_usuario", {
+        p_usuario_id: usuario.id,
+        p_rol: rol
+      });
+      if (error) throw error;
+
+      if (usuario.id === adminId && rol === "user") {
+        adminId = null;
+        document.getElementById("adminAppContainer").style.display = "none";
+        try {
+          var salida = await window.supabase.auth.signOut({ scope: "local" });
+          if (salida.error) throw salida.error;
+        } catch (err) {
+          console.error("Error al cerrar la sesión:", err);
+          alert("Tu rol cambió. Cierra sesión y vuelve a entrar para actualizar tus permisos.");
+        }
+        window.location.replace("latinos-en-pelota.html");
+        return;
+      }
+
+      showToast("Rol actualizado", "La cuenta debe cerrar sesión y volver a entrar para actualizar sus permisos.", "success");
+    } catch (err) {
+      console.error("Error al cambiar el rol:", err);
+      showToast("Error", err.message || "No se pudo cambiar el rol.", "error");
+      return;
+    } finally {
+      usuariosOcupado = false;
+      boton.disabled = false;
+    }
+
+    await cargarUsuarios();
   }
 
   // =========================================================================
@@ -1139,6 +1236,8 @@
         } else if (state.section === "comentarios") {
           state.comentariosQuery = q;
           renderComentarios();
+        } else if (state.section === "usuarios") {
+          filtrarUsuarios(q);
         } else if (state.section === "categorias") {
           document.querySelectorAll("#categoriasGrid .cat-card").forEach(function (card, i) {
             if (!categorias[i]) return;
@@ -1244,7 +1343,7 @@
 
     // Comprobar parámetros de URL
     var params = new URLSearchParams(window.location.search);
-    if (params.get("seccion")) {
+    if (haySesion && params.get("seccion")) {
       setSection(params.get("seccion"));
     }
     if (params.get("creada") === "1") {

@@ -189,10 +189,9 @@
 
     <div class="nav-group-label">Sistema</div>
  
-    <a href="https://supabase.com/dashboard/project/uoxtbzfmznnvhjdwdlrr/auth/users" target="_blank" rel="noopener noreferrer" class="nav-item" style="color:var(--text);font-weight:600;">
-      <span>👥 Gestionar Usuarios</span>
-      <span style="font-size:12px;color:var(--text-muted);">↗</span>
-    </a>
+    <button class="nav-item" data-section="usuarios">
+      <span>Usuarios</span>
+    </button>
 
     <!-- Usuario autenticado con opción de Cerrar Sesión -->
     <div class="sidebar-foot" id="sidebarUserFoot">
@@ -364,6 +363,24 @@
                 <tr><td colspan="6" style="text-align:center;padding:30px;"><div class="empty-state"><p>Cargando anuncios...</p></div></td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" data-view="usuarios">
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Acciones</th>
+              </tr></thead>
+              <tbody id="usuariosBody"></tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span id="usuariosAviso" role="status"></span>
           </div>
         </div>
       </section>
