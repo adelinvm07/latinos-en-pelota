@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recuperar contraseña | Latinos en Pelota</title>
+<link rel="icon" type="image/png" href="assets/Logo latinos .png">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/extras.css">
+</head>
+<body>
+<main class="login-wrapper" style="overflow:auto;">
+  <div class="login-card" style="margin:auto;">
+    <h2 id="recuperacionTitulo">Recuperar contraseña</h2>
+    <p class="login-sub" id="recuperacionIntro">Te enviaremos un enlace para elegir una contraseña nueva.</p>
+
+    <form id="solicitarRecuperacion">
+      <div class="form-group" style="text-align:left;">
+        <label class="form-label" for="correoRecuperacion">Correo electrónico</label>
+        <input class="input-control" type="email" id="correoRecuperacion" autocomplete="email" required>
+      </div>
+      <button class="btn btn-primary" type="submit">Enviar enlace</button>
+    </form>
+
+    <form id="cambiarContrasena" hidden>
+      <div class="form-group" style="text-align:left;">
+        <label class="form-label" for="nuevaContrasena">Nueva contraseña</label>
+        <input class="input-control" type="password" id="nuevaContrasena" autocomplete="new-password" minlength="6" required>
+      </div>
+      <div class="form-group" style="text-align:left;">
+        <label class="form-label" for="confirmarContrasena">Repite la contraseña</label>
+        <input class="input-control" type="password" id="confirmarContrasena" autocomplete="new-password" minlength="6" required>
+      </div>
+      <button class="btn btn-primary" type="submit">Guardar contraseña</button>
+    </form>
+
+    <p class="priv-login" id="estadoRecuperacion" role="status"></p>
+    <p class="priv-login"><a href="Panel-de-admin.html">Volver al acceso</a></p>
+    <p class="priv-login"><a href="politica-de-privacidad.html">Política de privacidad</a></p>
+  </div>
+</main>
+<script src="js/recuperar-contrasena.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/consentimiento.js"></script>
+</body>
+</html>
