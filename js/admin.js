@@ -1,12 +1,7 @@
-/**
- * Latinos en Pelota — Lógica del Panel de Administración
- * Autenticación de Administrador, Gestión de Categorías y Noticias con Supabase.
- */
 
 (function () {
   "use strict";
 
-  // Estado global de la vista
   var state = {
     section: "resumen",
     noticiasQuery: "",
@@ -30,7 +25,6 @@
   var adminId = null;
   var usuariosOcupado = false;
 
-  // Paleta de colores para las tarjetas de categorías
   var catPalette = [
     "var(--accent)",
     "var(--blue)",
@@ -49,9 +43,6 @@
     { id: 4, autor: "Yesenia Paulino", texto: "Ojalá el Cibao FC pueda sostener este nivel en la liguilla.", articulo: "Cibao FC se corona campeón", fecha: "2026-09-02", estado: "aprobado" }
   ];
 
-  // =========================================================================
-  // SISTEMA DE NOTIFICACIONES TOAST
-  // =========================================================================
   function showToast(title, message, type) {
     type = type || "info";
     var container = document.getElementById("toast-container");
@@ -88,9 +79,6 @@
     }, 4500);
   }
 
-  // =========================================================================
-  // HELPERS
-  // =========================================================================
   function escapeHtml(str) {
     if (!str) return "";
     return String(str)
@@ -113,11 +101,6 @@
     return d.getDate() + " " + meses[d.getMonth()] + " " + d.getFullYear();
   }
 
-  // =========================================================================
-  // AUTENTICACIÓN Y CONTROL DE ACCESO
-  // NOTA: Esto es control de interfaz. La seguridad real y definitiva
-  // la garantiza el RLS de Supabase en la base de datos.
-  // =========================================================================
   async function verificarSesion() {
     if (!window.supabase) return false;
 
@@ -141,13 +124,11 @@
       var esAdmin = user && user.app_metadata && user.app_metadata.role === "admin";
 
       if (!esAdmin) {
-        // Si no posee rol admin, redirigir al portal público antes de renderizar nada
         if (btnAdminPublico) btnAdminPublico.style.display = "none";
         window.location.replace("latinos-en-pelota.html");
         return false;
       }
 
-      // Usuario autenticado como administrador
       if (btnAdminPublico) btnAdminPublico.style.display = "inline-block";
       if (loginScreen) loginScreen.style.display = "none";
       if (appContainer) appContainer.style.display = "";
@@ -246,7 +227,6 @@
       });
     }
 
-    // Botón de Cerrar Sesión
     var btnLogout = document.getElementById("btnLogout");
     if (btnLogout) {
       btnLogout.addEventListener("click", async function () {
@@ -258,9 +238,6 @@
     }
   }
 
-  // =========================================================================
-  // CONEXIÓN CON SUPABASE: CARGA DE CATEGORÍAS Y NOTICIAS
-  // =========================================================================
   async function cargarCategoriasDesdeSupabase() {
     if (!window.supabase) return;
 
@@ -328,9 +305,6 @@
     }
   }
 
-  // =========================================================================
-  // GESTIÓN DE CATEGORÍAS (CRUD CON SUPABASE)
-  // =========================================================================
   window.abrirModalNuevaCategoria = function () {
     state.editingCatId = null;
     document.getElementById("modalCatTitulo").textContent = "Nueva Categoría";
@@ -379,7 +353,6 @@
 
     try {
       if (state.editingCatId) {
-        // Modificar categoría existente
         var { error } = await window.supabase
           .from("categorias")
           .update({ nombre: nombre })
@@ -388,7 +361,6 @@
         if (error) throw error;
         showToast("Éxito", 'Categoría "' + nombre + '" actualizada.', "success");
       } else {
-        // Crear nueva categoría
         var { error: insertError } = await window.supabase
           .from("categorias")
           .insert([{ nombre: nombre }]);
@@ -465,9 +437,6 @@
     }
   }
 
-  // =========================================================================
-  // RENDER: RESUMEN
-  // =========================================================================
   function renderResumenStats() {
     var statNoticias = document.getElementById("statNoticias");
     var statComentarios = document.getElementById("statComentarios");
@@ -476,9 +445,6 @@
     if (statComentarios) statComentarios.textContent = fmt(state.comentariosPendientesTotal);
   }
 
-  // =========================================================================
-  // RENDER: CATEGORÍAS
-  // =========================================================================
   var MAX_COBERTURA = 5; // se muestran las 4 categorías con más noticias y el resto como "Otras"
 
   // Método del mayor resto: los porcentajes enteros suman exactamente 100
@@ -556,9 +522,6 @@
     }).join("");
   }
 
-  // =========================================================================
-  // RENDER: CATEGORÍAS
-  // =========================================================================
 
   function renderCategorias() {
     var grid = document.getElementById("categoriasGrid");
@@ -610,9 +573,6 @@
     sel.value = current || "todas";
   }
 
-  // =========================================================================
-  // RENDER: NOTICIAS
-  // =========================================================================
   function filteredNoticias() {
     var q = state.noticiasQuery.trim().toLowerCase();
     return noticias.filter(function (item) {
@@ -730,9 +690,6 @@
     }
   }
 
-  // =========================================================================
-  // GESTIÓN Y RENDER: COMENTARIOS
-  // =========================================================================
   async function cargarComentariosDesdeSupabase() {
     if (!window.supabase) return;
     try {
@@ -819,9 +776,6 @@
 
   window.aprobarComentarioAdmin = aprobarComentario;
 
-  // =========================================================================
-  // NAV BADGES & SECCIÓN
-  // =========================================================================
   function updateNavBadges() {
     var bNoti = document.getElementById("badgeNoticias");
     var bCat = document.getElementById("badgeCategorias");
@@ -1002,9 +956,6 @@
     await cargarUsuarios();
   }
 
-  // =========================================================================
-  // GESTIÓN DE ANUNCIOS (PUBLICIDAD)
-  // =========================================================================
   async function cargarAnunciosDesdeSupabase() {
     if (!window.supabase) return;
     try {
@@ -1187,23 +1138,17 @@
     }
   };
 
-  // =========================================================================
-  // INICIALIZACIÓN Y EVENT LISTENERS
-  // =========================================================================
   document.addEventListener("DOMContentLoaded", async function () {
-    // 1. Configurar y verificar autenticación
     configurarLogin();
     window.addEventListener("preferencias-cookies", renderAnuncios);
     var haySesion = await verificarSesion();
 
-    // 2. Navegación en sidebar
     document.querySelectorAll(".nav-item").forEach(function (item) {
       item.addEventListener("click", function () {
         if (item.dataset.section) setSection(item.dataset.section);
       });
     });
 
-    // 3. Menú móvil
     var menuToggle = document.getElementById("menuToggle");
     if (menuToggle) {
       menuToggle.addEventListener("click", function () {
@@ -1212,7 +1157,6 @@
       });
     }
 
-    // 4. Búsqueda
     var searchInput = document.getElementById("searchInput");
     if (searchInput) {
       searchInput.addEventListener("input", function (e) {
@@ -1236,7 +1180,6 @@
       });
     }
 
-    // 5. Filtros de Noticias
     var filtroCat = document.getElementById("filtroCategoria");
     if (filtroCat) {
       filtroCat.addEventListener("change", function (e) {
@@ -1262,7 +1205,6 @@
       });
     });
 
-    // 6. Paginación Noticias
     var prevBtn = document.getElementById("noticiasPrev");
     if (prevBtn) {
       prevBtn.addEventListener("click", function () {
@@ -1278,7 +1220,6 @@
       });
     }
 
-    // 7. Acciones en la tabla de noticias
     var notiBody = document.getElementById("noticiasBody");
     if (notiBody) {
       notiBody.addEventListener("click", function (e) {
@@ -1289,7 +1230,6 @@
       });
     }
 
-    // 8. Modal Categoría
     var formCat = document.getElementById("formCategoria");
     if (formCat) {
       formCat.addEventListener("submit", function (e) {
@@ -1303,7 +1243,6 @@
       btnConfirmDel.addEventListener("click", confirmarEliminarCategoria);
     }
 
-    // 9. Modal Anuncio
     var formAnun = document.getElementById("formAnuncio");
     if (formAnun) {
       formAnun.addEventListener("submit", function (e) {
@@ -1312,7 +1251,6 @@
       });
     }
 
-    // Cerrar modales con tecla Escape
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") {
         cerrarModalCategoria();
@@ -1321,7 +1259,6 @@
       }
     });
 
-    // Si hay sesión iniciada, cargar datos
     if (haySesion) {
       cargarCategoriasDesdeSupabase();
       cargarNoticiasDesdeSupabase();
@@ -1329,7 +1266,6 @@
       cargarAnunciosDesdeSupabase();
     }
 
-    // Comprobar parámetros de URL
     var params = new URLSearchParams(window.location.search);
     if (haySesion && params.get("seccion")) {
       setSection(params.get("seccion"));

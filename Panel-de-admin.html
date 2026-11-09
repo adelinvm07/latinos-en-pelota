@@ -95,9 +95,6 @@
 </head>
 <body>
 
-<!-- =========================================================================
-     PANTALLA DE ACCESO RESTRINGIDO (LOGIN DE ADMINISTRADOR)
-     ========================================================================= -->
 <div id="adminLoginScreen" class="login-wrapper" style="display:none;">
   <div class="login-card">
     <div class="brand-mark" style="width:52px;height:52px;font-size:22px;margin:0 auto 16px;">LP</div>
@@ -129,12 +126,8 @@
   </div>
 </div>
 
-<!-- =========================================================================
-     INTERFAZ PRINCIPAL DEL PANEL
-     ========================================================================= -->
 <div class="app" id="adminAppContainer" style="display:none;">
 
-  <!-- Mobile Topbar -->
   <div class="mobile-topbar">
     <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -146,7 +139,6 @@
     <a href="crear-noticia.html" class="btn btn-primary btn-sm">+ Noticia</a>
   </div>
 
-  <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <div class="brand-mark">LP</div>
@@ -156,7 +148,6 @@
       </div>
     </div>
 
-    <!-- Botón directo de acción rápida -->
     <a href="crear-noticia.html" class="sidebar-action-btn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
       Crear Noticia
@@ -195,7 +186,6 @@
       <span>Usuarios</span>
     </button>
 
-    <!-- Usuario autenticado con opción de Cerrar Sesión -->
     <a href="politica-de-privacidad.html" class="nav-item">Política de privacidad</a>
     <div class="sidebar-foot" id="sidebarUserFoot">
       <div class="avatar" id="userAvatar">--</div>
@@ -209,11 +199,9 @@
     </div>
   </aside>
 
-  <!-- Main Content -->
   <main class="main">
     <div class="content">
 
-      <!-- Topbar Header -->
       <div class="topbar">
         <div class="topbar-titles">
           <h1 id="pageTitle">Resumen del sitio</h1>
@@ -225,7 +213,6 @@
         </div>
       </div>
 
-      <!-- ==================== SECCIÓN: RESUMEN ==================== -->
       <section class="section active" data-view="resumen">
         <div class="stat-grid">
           <div class="stat-card stat-card--hero">
@@ -270,7 +257,6 @@
         </div>
       </section>
 
-      <!-- ==================== SECCIÓN: NOTICIAS ==================== -->
       <section class="section" data-view="noticias">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
           <div class="filters-row" style="margin-bottom:0;">
@@ -310,9 +296,7 @@
         </div>
       </section>
 
-      <!-- ==================== SECCIÓN: CATEGORÍAS ==================== -->
       <section class="section" data-view="categorias">
-        <!-- Barra de acción de categorías -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;background:var(--surface);padding:16px 20px;border-radius:var(--radius);border:1px solid var(--border);">
           <div>
             <h3 style="font-size:16px;font-weight:700;">Categorías del Portal</h3>
@@ -330,7 +314,6 @@
         </div>
       </section>
 
-      <!-- ==================== SECCIÓN: COMENTARIOS ==================== -->
       <section class="section" data-view="comentarios">
         <div class="tabs">
           <button class="tab-btn active" data-tab="pendiente">Pendientes</button>
@@ -339,7 +322,6 @@
         <div class="comment-list" id="comentariosList"></div>
       </section>
 
-      <!-- ==================== SECCIÓN: PUBLICIDAD ==================== -->
       <section class="section" data-view="anuncios">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;background:var(--surface);padding:16px 20px;border-radius:var(--radius);border:1px solid var(--border);">
           <div>
@@ -388,18 +370,13 @@
         </div>
       </section>
 
-      <!-- Placeholders analítica -->
       <section class="section" data-view="trafico"><div class="placeholder-panel"><strong>Tráfico del sitio</strong>Métricas en tiempo real próximamente.</div></section>
 
     </div>
   </main>
 </div>
 
-<!-- =========================================================================
-     MODALES DEL SISTEMA
-     ========================================================================= -->
 
-<!-- Modal: Crear / Editar Categoría -->
 <div class="modal-backdrop" id="modalCategoria">
   <div class="modal">
     <div class="modal-header">
@@ -423,7 +400,6 @@
   </div>
 </div>
 
-<!-- Modal: Confirmar Eliminación de Categoría -->
 <div class="modal-backdrop" id="modalEliminarCat">
   <div class="modal" style="max-width: 440px;">
     <div class="modal-header">
@@ -441,7 +417,6 @@
   </div>
 </div>
 
-<!-- Modal: Crear / Editar Anuncio -->
 <div class="modal-backdrop" id="modalAnuncio">
   <div class="modal" style="max-width: 500px;">
     <div class="modal-header">
@@ -483,10 +458,8 @@
   </div>
 </div>
 
-<!-- Contenedor para notificaciones Toast -->
 <div id="toast-container"></div>
 
-<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/consentimiento.js"></script>

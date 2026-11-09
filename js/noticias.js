@@ -1,4 +1,3 @@
-// Página de lectura de una noticia: noticia.html?slug=titulo-noticia  (o ?id=123)
 (function () {
   "use strict";
 
@@ -22,7 +21,6 @@
     return "futbol-red";
   }
 
-  // Ej: 22 de octubre de 2026
   function formatearFecha(iso) {
     if (!iso) return "";
     var d = new Date(iso);
@@ -71,9 +69,6 @@
     inicializarComentarios(n.id);
   }
 
-  // =========================================================================
-  // GESTIÓN DE COMENTARIOS REALES (SUPABASE)
-  // =========================================================================
   async function inicializarComentarios(noticiaId) {
     var sesionUsuario = null;
     if (window.supabase && window.supabase.auth) {
@@ -251,11 +246,11 @@
 
         var autorEl = document.createElement("span");
         autorEl.className = "comentario-autor";
-        autorEl.textContent = c.autor || "Anónimo"; // textContent seguro
+        autorEl.textContent = c.autor || "Anónimo";
 
         var fechaEl = document.createElement("span");
         fechaEl.className = "comentario-fecha";
-        fechaEl.textContent = formatearFecha(c.created_at); // textContent seguro
+        fechaEl.textContent = formatearFecha(c.created_at);
 
         headerEl.appendChild(autorEl);
         headerEl.appendChild(fechaEl);
@@ -263,7 +258,7 @@
 
         var textoEl = document.createElement("p");
         textoEl.className = "comentario-texto";
-        textoEl.textContent = c.contenido; // textContent seguro (evita XSS)
+        textoEl.textContent = c.contenido;
         itemEl.appendChild(textoEl);
 
         if (currentUser && (currentUser.id === c.user_id || esAdmin)) {

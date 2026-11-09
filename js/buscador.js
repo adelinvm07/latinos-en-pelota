@@ -7,7 +7,6 @@
   var filtroFechaActivo = "todas";
   var visitaRegistrada = false;
 
-  // Elementos del DOM
   var contenedorTabs = document.getElementById("contenedor-tabs");
   var inputBusqueda = document.querySelector(".search-box input");
   var formBusqueda = document.querySelector(".search-box");
@@ -41,9 +40,6 @@
     return d.getDate() + " " + meses[d.getMonth()] + " " + d.getFullYear();
   }
 
-  // =========================================================================
-  // CARGAR CATEGORÍAS REALES DESDE SUPABASE
-  // =========================================================================
   async function cargarCategorias() {
     if (!contenedorTabs) return;
 
@@ -91,9 +87,6 @@
       .replace(/"/g, "&quot;");
   }
 
-  // =========================================================================
-  // CARGAR NOTICIAS DESDE SUPABASE
-  // =========================================================================
   async function cargarNoticias() {
     if (!window.supabase) return;
 
@@ -134,26 +127,20 @@
     }
   }
 
-  // =========================================================================
-  // FILTRADO Y RENDERIZADO
-  // =========================================================================
   function aplicarFiltros() {
     if (!gridNoticias) return;
 
     var now = new Date();
 
     var noticiasFiltradas = todasLasNoticias.filter(function (noticia) {
-      // 1. Filtro Categoría
       var coincideCategoria = categoriaActiva === null || noticia.categoriaId === categoriaActiva;
 
-      // 2. Filtro Búsqueda
       var term = textoBusqueda.toLowerCase();
       var coincideTexto = !term ||
         noticia.titulo.toLowerCase().includes(term) ||
         noticia.subtitulo.toLowerCase().includes(term) ||
         noticia.categoria.toLowerCase().includes(term);
 
-      // 3. Filtro Fecha
       var coincideFecha = true;
       if (filtroFechaActivo !== "todas" && noticia.rawFecha) {
         var pub = noticia.rawFecha;
@@ -183,14 +170,11 @@
   function renderizarResultados(lista) {
     if (!gridNoticias) return;
 
-    // Se oculta la destacada si el filtro de fecha es "mes_pasado", "hace_2_meses" o "mas_2_meses"
     var esFiltroAntiguo = ["mes_pasado", "hace_2_meses", "mas_2_meses"].indexOf(filtroFechaActivo) !== -1;
 
-    // Buscar noticia destacada
     var destacada = todasLasNoticias.find(function (n) { return n.esDestacada; }) || todasLasNoticias[0];
     var destacadaEnLista = destacada ? lista.find(function (n) { return n.id === destacada.id; }) : null;
 
-    // El hero solo se muestra en "Todas", sin texto de búsqueda, con filtro reciente/este_mes/todas y si la destacada está en los resultados
     var mostrarHero = (categoriaActiva === null) &&
                       (textoBusqueda.length === 0) &&
                       !esFiltroAntiguo &&
@@ -199,7 +183,6 @@
     var mainEl = document.querySelector("main");
     if (mainEl) mainEl.classList.toggle("sin-hero", !mostrarHero);
 
-    // 1. Mostrar o u ocultar el banner hero
     if (heroArticulo) {
       if (mostrarHero) {
         heroArticulo.style.display = "";
@@ -220,7 +203,6 @@
       }
     }
 
-    // 2. La noticia destacada no se repite abajo si el banner está visible
     var noticiasGrid = mostrarHero
       ? lista.filter(function (item) { return item.id !== destacada.id; })
       : lista;
@@ -243,7 +225,6 @@
       return;
     }
 
-    // 3. Renderizar la cuadrícula de noticias
     gridNoticias.innerHTML = noticiasGrid.map(function (item) {
       var enlace = urlNoticia(item);
       return (
@@ -262,9 +243,6 @@
     }).join("");
   }
 
-  // =========================================================================
-  // EVENT LISTENERS
-  // =========================================================================
   function inicializarEventos() {
     if (formBusqueda) {
       formBusqueda.addEventListener("submit", function (e) {
@@ -298,9 +276,6 @@
     });
   }
 
-  // =========================================================================
-  // CARGAR PUBLICIDAD (ANUNCIOS DINÁMICOS)
-  // =========================================================================
   async function cargarAnuncios() {
     var asideSidebar = document.getElementById("sidebar-anuncios");
     if (!asideSidebar) return;
