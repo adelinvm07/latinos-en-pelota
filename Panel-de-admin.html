@@ -122,12 +122,7 @@
       </button>
       <p id="registroAviso" role="status" hidden></p>
     </form>
-    <div class="form-group" role="group" aria-label="Inicio de sesión con otras cuentas">
-      <p class="login-sub">O continúa con otra cuenta</p>
-      <button type="button" class="btn btn-ghost" data-proveedor="google">Continuar con Google</button>
-      <button type="button" class="btn btn-ghost" data-proveedor="facebook">Continuar con Facebook</button>
-      <button type="button" class="btn btn-ghost" data-proveedor="apple">Continuar con Apple</button>
-    </div>
+    <div id="accesoSocial"></div>
     <p class="priv-login"><a href="politica-de-privacidad.html">Política de privacidad</a></p>
   </div>
 </div>
@@ -469,6 +464,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/consentimiento.js"></script>
+<script src="js/acceso-social.js"></script>
 <script src="js/admin.js"></script>
 <script>
 function obtenerClienteSupabase() {

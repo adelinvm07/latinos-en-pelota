@@ -120,6 +120,8 @@
         return false;
       }
 
+      if (window.accesoSocial.volverANoticia()) return false;
+
       var user = session.user;
       var esAdmin = user && user.app_metadata && user.app_metadata.role === "admin";
 
@@ -162,51 +164,8 @@
 
     var btnRegistro = document.getElementById("btnRegistro");
     var aviso = document.getElementById("registroAviso");
-    var botonesSociales = document.querySelectorAll("#adminLoginScreen [data-proveedor]");
-
-    function mostrarErrorSocial(cancelado) {
-      errorEl.textContent = cancelado
-        ? "Cancelaste el inicio de sesión. Puedes intentarlo de nuevo."
-        : "No se pudo iniciar sesión con esa cuenta. Inténtalo de nuevo o usa tu correo.";
-      errorEl.style.display = "block";
-    }
-
-    var url = new URL(window.location.href);
-    var errorOAuth = url.searchParams.get("error") || new URLSearchParams(url.hash.slice(1)).get("error");
-    if (errorOAuth) {
-      mostrarErrorSocial(errorOAuth === "access_denied");
-      ["error", "error_code", "error_description"].forEach(function (parametro) {
-        url.searchParams.delete(parametro);
-      });
-      url.hash = "";
-      window.history.replaceState(null, "", url);
-    }
-
-    botonesSociales.forEach(function (boton) {
-      boton.addEventListener("click", async function () {
-        if (btnSubmit.disabled) return;
-        errorEl.style.display = "none";
-        aviso.hidden = true;
-        btnSubmit.disabled = true;
-        btnRegistro.disabled = true;
-        botonesSociales.forEach(function (opcion) { opcion.disabled = true; });
-
-        try {
-          var { error } = await window.supabase.auth.signInWithOAuth({
-            provider: boton.dataset.proveedor,
-            options: { redirectTo: new URL("Panel-de-admin.html", window.location.href).href }
-          });
-          if (error) throw error;
-        } catch (err) {
-          console.error("Error de autenticación con proveedor:", err);
-          mostrarErrorSocial(false);
-        } finally {
-          btnSubmit.disabled = false;
-          btnRegistro.disabled = false;
-          botonesSociales.forEach(function (opcion) { opcion.disabled = false; });
-        }
-      });
-    });
+    window.accesoSocial.montar(document.getElementById("accesoSocial"), [btnSubmit, btnRegistro]);
+    window.accesoSocial.mostrarErrorDeRetorno(errorEl);
 
     if (form) {
       form.addEventListener("submit", async function (e) {

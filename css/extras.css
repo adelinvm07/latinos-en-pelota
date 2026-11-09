@@ -127,3 +127,60 @@
   margin-top: 0.75rem;
   font-size: 0.85rem;
 }
+
+.social-acceso {
+  margin-top: 0.85rem;
+}
+
+.social-etiqueta {
+  margin: 0 0 0.45rem;
+  color: var(--muted, var(--text-muted, #6b7688));
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.social-iconos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.social-icono {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid #c4ccd7;
+  border-radius: 50%;
+  background: #fff;
+  color: #171717;
+  cursor: pointer;
+}
+
+.social-icono svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.social-icono:focus-visible {
+  outline: 2px solid #235a98;
+  outline-offset: 3px;
+}
+
+.social-icono:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.social-facebook {
+  border-color: #1877f2;
+  background: #1877f2;
+  color: #fff;
+}
+
+.social-aviso {
+  margin-top: 0.5rem;
+}
