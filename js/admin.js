@@ -290,7 +290,7 @@
           subtitulo: item.subtitulo || "",
           categoria: catNombre,
           categoria_id: item.categoria_id,
-          estado: item.estado ? (item.estado.charAt(0).toUpperCase() + item.estado.slice(1).toLowerCase()) : "Publicado",
+          estado: item.estado === "publicado" ? "Publicado" : "Borrador",
           fecha: item.publicado_en ? item.publicado_en.split("T")[0] : "",
           slug: item.slug
         };
@@ -598,7 +598,7 @@
         '<tr><td colspan="6"><div class="empty-state">' +
         '<div class="empty-state-icon">📰</div>' +
         '<h3>No se encontraron noticias</h3>' +
-        '<p>' + (noticias.length === 0 ? "Aún no hay noticias creadas en la base de datos." : "No hay noticias que coincidan con el filtro actual.") + '</p>' +
+        '<p>' + (noticias.length === 0 ? "Aún no hay noticias." : "No hay noticias que coincidan con el filtro actual.") + '</p>' +
         (noticias.length === 0 ? '<a href="crear-noticia.html" class="btn btn-primary" style="margin-top:10px;">+ Crear Primera Noticia</a>' : '') +
         '</div></td></tr>';
     } else {
@@ -762,7 +762,7 @@
       return !query || [c.autor, c.texto, c.articulo].some(function (v) { return (v || "").toLowerCase().indexOf(query) !== -1; });
     });
     if (!filtrados.length) {
-      var mensaje = query ? "Ningún comentario coincide con la búsqueda." : comentarios.length ? "Todavía no hay comentarios " + (state.comentariosTab === "pendiente" ? "pendientes." : "aprobados.") : "No hay comentarios registrados en la base de datos.";
+      var mensaje = query ? "Ningún comentario coincide con la búsqueda." : comentarios.length ? "Todavía no hay comentarios " + (state.comentariosTab === "pendiente" ? "pendientes." : "aprobados.") : "Aún no hay comentarios.";
       list.innerHTML = '<div class="empty-state"><p>' + mensaje + '</p></div>';
       return;
     }
@@ -816,7 +816,7 @@
     if (pageTitle) pageTitle.textContent = meta.title;
     if (pageSub) {
       pageSub.textContent =
-        name === "noticias" ? fmt(state.noticiasTotal) + " noticias en base de datos" :
+        name === "noticias" ? fmt(state.noticiasTotal) + " noticias en total" :
         name === "categorias" ? fmt(categorias.length) + " categorías activas" :
         name === "anuncios" ? fmt(anuncios.length) + " anuncios configurados" :
         meta.subtitle;

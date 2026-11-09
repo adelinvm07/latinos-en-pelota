@@ -122,7 +122,7 @@
     } catch (err) {
       console.error("Error cargando noticias desde Supabase:", err);
       if (gridNoticias) {
-        gridNoticias.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--red); padding: 40px 0;">Error al conectar con la base de datos.</p>';
+        gridNoticias.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--red); padding: 40px 0;">No se pudieron cargar las noticias.</p>';
       }
     }
   }
@@ -214,7 +214,7 @@
       }
 
       var mensaje = todasLasNoticias.length === 0
-        ? "Aún no hay noticias publicadas en la base de datos."
+        ? "Aún no hay noticias publicadas."
         : 'No hay noticias que coincidan con los filtros seleccionados.';
 
       gridNoticias.innerHTML =
