@@ -309,6 +309,7 @@
         .from("anuncios")
         .select("id, titulo, imagen_url, enlace_url, ubicacion, activo")
         .eq("activo", true)
+        .eq("ubicacion", "sidebar")
         .order("id", { ascending: true });
 
       if (error) throw error;
