@@ -41,6 +41,26 @@
   }
 
   // =========================================================================
+  // REQUISITO 2: MOSTRAR CARGA CON DISEÑO DE ESQUELETO (SKELETON LOADER)
+  // =========================================================================
+  function renderizarSkeletons() {
+    if (!gridNoticias) return;
+    var skeletonHtml = '';
+    for (var i = 0; i < 6; i++) {
+      skeletonHtml += 
+        '<div class="skeleton-card">' +
+          '<div class="skeleton-box skeleton-media"></div>' +
+          '<div class="skeleton-box skeleton-tag"></div>' +
+          '<div class="skeleton-box skeleton-title"></div>' +
+          '<div class="skeleton-box skeleton-text"></div>' +
+          '<div class="skeleton-box skeleton-text short"></div>' +
+          '<div class="skeleton-box skeleton-byline"></div>' +
+        '</div>';
+    }
+    gridNoticias.innerHTML = skeletonHtml;
+  }
+
+  // =========================================================================
   // CARGAR CATEGORÍAS REALES DESDE SUPABASE
   // =========================================================================
   async function cargarCategorias() {
@@ -67,7 +87,6 @@
 
       contenedorTabs.innerHTML = htmlTabs + navControlsHtml;
 
-      // Re-vincular los elementos del DOM y restaurar estado
       inputBusqueda = document.querySelector(".search-box input");
       if (inputBusqueda) inputBusqueda.value = textoBusqueda;
 
@@ -98,9 +117,8 @@
   async function cargarNoticias() {
     if (!window.supabase) return;
 
-    if (gridNoticias) {
-      gridNoticias.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px 0;">Cargando noticias desde Supabase...</p>';
-    }
+    // Mostrar diseño de esqueleto en vez de indicador o texto
+    renderizarSkeletons();
 
     try {
       var { data, error } = await window.supabase
@@ -136,7 +154,7 @@
   }
 
   // =========================================================================
-  // FILTRADO Y RENDERIZADO
+  // FILTRADO Y RENDERIZADO CON TRANSICIÓN (REQUISITO 3)
   // =========================================================================
   function aplicarFiltros() {
     if (!gridNoticias) return;
@@ -144,18 +162,15 @@
     var now = new Date();
 
     var noticiasFiltradas = todasLasNoticias.filter(function (noticia) {
-      // 1. Filtro Categoría
       var coincideCategoria = (categoriaActiva === "Todas") ||
         (noticia.categoria.toLowerCase() === categoriaActiva.toLowerCase());
 
-      // 2. Filtro Búsqueda
       var term = textoBusqueda.toLowerCase();
       var coincideTexto = !term ||
         noticia.titulo.toLowerCase().includes(term) ||
         noticia.subtitulo.toLowerCase().includes(term) ||
         noticia.categoria.toLowerCase().includes(term);
 
-      // 3. Filtro Fecha
       var coincideFecha = true;
       if (filtroFechaActivo !== "todas" && noticia.rawFecha) {
         var pub = noticia.rawFecha;
@@ -185,14 +200,10 @@
   function renderizarResultados(lista) {
     if (!gridNoticias) return;
 
-    // Se oculta la destacada si el filtro de fecha es "mes_pasado", "hace_2_meses" o "mas_2_meses"
     var esFiltroAntiguo = ["mes_pasado", "hace_2_meses", "mas_2_meses"].indexOf(filtroFechaActivo) !== -1;
-
-    // Buscar noticia destacada
     var destacada = todasLasNoticias.find(function (n) { return n.esDestacada; }) || todasLasNoticias[0];
     var destacadaEnLista = destacada ? lista.find(function (n) { return n.id === destacada.id; }) : null;
 
-    // El hero solo se muestra en "Todas", sin texto de búsqueda, con filtro reciente/este_mes/todas y si la destacada está en los resultados
     var mostrarHero = (categoriaActiva === "Todas") &&
                       (textoBusqueda.length === 0) &&
                       !esFiltroAntiguo &&
@@ -201,7 +212,6 @@
     var mainEl = document.querySelector("main");
     if (mainEl) mainEl.classList.toggle("sin-hero", !mostrarHero);
 
-    // 1. Mostrar o u ocultar el banner hero
     if (heroArticulo) {
       if (mostrarHero) {
         heroArticulo.style.display = "";
@@ -222,7 +232,6 @@
       }
     }
 
-    // 2. La noticia destacada no se repite abajo si el banner está visible
     var noticiasGrid = mostrarHero
       ? lista.filter(function (item) { return item.id !== destacada.id; })
       : lista;
@@ -238,18 +247,19 @@
         : 'No hay noticias que coincidan con los filtros seleccionados.';
 
       gridNoticias.innerHTML =
-        '<div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #fff; border-radius: 6px; border: 1px solid var(--line);">' +
+        '<div style="grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #fff; border-radius: 12px; border: 1px solid var(--border-soft); box-shadow: var(--shadow-card);">' +
           '<h3 style="margin: 0 0 8px; font-size: 18px; color: var(--navy);">Sin resultados</h3>' +
-          '<p style="margin: 0; font-size: 14px; color: var(--muted);">' + mensaje + '</p>' +
+          '<p style="margin: 0; font-size: 14px; color: var(--text-muted);">' + mensaje + '</p>' +
         '</div>';
       return;
     }
 
-    // 3. Renderizar la cuadrícula de noticias
-    gridNoticias.innerHTML = noticiasGrid.map(function (item) {
+    // Renderizado con retraso de animación en cascada para suavidad (Requisito 3)
+    gridNoticias.innerHTML = noticiasGrid.map(function (item, index) {
       var enlace = urlNoticia(item);
+      var delay = (index * 0.05).toFixed(2);
       return (
-        '<article class="story">' +
+        '<article class="story" style="animation-delay: ' + delay + 's;">' +
           '<div class="media">' +
             '<a href="' + enlace + '" style="display:block;height:100%">' +
               '<img src="' + escapeHtml(item.imagen) + '" alt="' + escapeHtml(item.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +

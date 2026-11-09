@@ -18,15 +18,18 @@
     --text-main: #1a1a1a;
     --text-light: #ffffff;
     --text-muted: #6b7686;
-    --bg-page: #ffffff;
-    --bg-card: #f4f6f8;
-    --border-soft: #e2e6ea;
+    --bg-page: #f5f6f8;
+    --bg-card: #ffffff;
+    --border-soft: #e2e8f0;
+    --border-focus: #cbd5e1;
+
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-hover: 0 10px 25px rgba(0,0,0,0.1);
 
     --font-display: 'Varsity', 'Arial Narrow', sans-serif;
     --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Reset directo sin librerías ni sintaxis generativa */
 *,
 *::before,
 *::after {
@@ -189,43 +192,155 @@ nav a.active {
     grid-template-columns: repeat(2, 1fr);
 }
 
-/* Tarjetas */
-.card {
+/* ==========================================================================
+   REQUISITO 1 Y 4: MARCOS ESTÉTICOS Y ENFOQUE AL PASAR EL MOUSE (HOVER FOCUS)
+   ========================================================================== */
+article.story {
     display: flex;
     flex-direction: column;
-}
-
-.thumb {
-    background-color: var(--bg-card);
+    background: var(--bg-card);
     border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.25s ease;
+    cursor: pointer;
+    overflow: hidden;
+
+    /* REQUISITO 3: Transición de aparición desde abajo */
+    animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Efecto de foco similar a las tarjetas de categorías del admin */
+article.story:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--border-focus);
+}
+
+article.story .media {
+    aspect-ratio: 4/3;
     border-radius: 8px;
-    aspect-ratio: 16 / 10;
-    margin-bottom: 0.75rem;
+    overflow: hidden;
+    background: #dde1e7;
+    margin-bottom: 12px;
 }
 
-.card .tag {
+article.story .media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+article.story:hover .media img {
+    transform: scale(1.03);
+}
+
+article.story .tag {
     align-self: flex-start;
+    margin-top: 4px;
+    margin-bottom: 10px;
 }
 
-.card h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1.35;
+article.story h3 {
+    margin: 0 0 8px;
+    font-size: 17px;
+    line-height: 1.3;
     color: var(--navy);
-    margin-bottom: 0.5rem;
 }
 
-.card .dek {
+article.story h3 a:hover {
+    color: var(--red);
+}
+
+article.story p {
+    margin: 0 0 12px;
+    font-size: 14px;
     color: var(--text-muted);
-    font-size: 0.8125rem;
     line-height: 1.5;
-    margin-bottom: 0.625rem;
+    flex-grow: 1;
 }
 
-.card .byline {
+article.story .byline {
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: 13px;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 10px;
     margin-top: auto;
+}
+
+/* ==========================================================================
+   REQUISITO 3: ANIMACIÓN DE TRANSICIÓN DE ABAJO HACIA ARRIBA
+   ========================================================================== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(22px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================================================
+   REQUISITO 2: PANTALLA DE CARGA CON DISEÑO DE ESQUELETO (SKELETON LOADER)
+   ========================================================================== */
+.skeleton-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.skeleton-box {
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s infinite;
+    border-radius: 6px;
+}
+
+.skeleton-media {
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 8px;
+}
+
+.skeleton-tag {
+    width: 70px;
+    height: 18px;
+}
+
+.skeleton-title {
+    width: 90%;
+    height: 22px;
+}
+
+.skeleton-text {
+    width: 100%;
+    height: 14px;
+}
+
+.skeleton-text.short {
+    width: 60%;
+}
+
+.skeleton-byline {
+    width: 40%;
+    height: 12px;
+    margin-top: 8px;
+}
+
+@keyframes skeletonLoading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 /* Sidebar y Anuncios */
@@ -407,6 +522,7 @@ footer a:hover {
         font-size: 1.375rem;
     }
 }
+
 .header-search {
     display: flex;
     align-items: center;
