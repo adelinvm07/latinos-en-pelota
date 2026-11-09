@@ -112,7 +112,7 @@
         <input type="password" id="loginPassword" class="input-control" placeholder="Contraseña" required autocomplete="current-password">
       </div>
 
-      <p id="loginErrorMsg" style="color:var(--danger);font-size:13px;display:none;background:var(--danger-soft);padding:10px 12px;border-radius:6px;margin-bottom:14px;text-align:left;"></p>
+      <p id="loginErrorMsg" role="alert" style="color:var(--danger);font-size:13px;display:none;background:var(--danger-soft);padding:10px 12px;border-radius:6px;margin-bottom:14px;text-align:left;"></p>
 
       <button type="submit" class="btn btn-primary" id="btnLoginSubmit" style="width:100%;padding:12px;font-size:14.5px;">
         Iniciar Sesión
@@ -122,6 +122,12 @@
       </button>
       <p id="registroAviso" role="status" hidden></p>
     </form>
+    <div class="form-group" role="group" aria-label="Inicio de sesión con otras cuentas">
+      <p class="login-sub">O continúa con otra cuenta</p>
+      <button type="button" class="btn btn-ghost" data-proveedor="google">Continuar con Google</button>
+      <button type="button" class="btn btn-ghost" data-proveedor="facebook">Continuar con Facebook</button>
+      <button type="button" class="btn btn-ghost" data-proveedor="apple">Continuar con Apple</button>
+    </div>
     <p class="priv-login"><a href="politica-de-privacidad.html">Política de privacidad</a></p>
   </div>
 </div>

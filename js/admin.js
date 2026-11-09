@@ -104,11 +104,11 @@
   async function verificarSesion() {
     if (!window.supabase) return false;
 
+    var loginScreen = document.getElementById("adminLoginScreen");
     try {
       var { data, error } = await window.supabase.auth.getSession();
       if (error) throw error;
 
-      var loginScreen = document.getElementById("adminLoginScreen");
       var appContainer = document.getElementById("adminAppContainer");
       var btnAdminPublico = document.getElementById("btnPanelAdmin");
       var session = data ? data.session : null;
@@ -148,6 +148,7 @@
       return true;
     } catch (err) {
       console.warn("Error al verificar sesión:", err);
+      if (loginScreen) loginScreen.style.display = "flex";
       return false;
     }
   }
@@ -161,6 +162,51 @@
 
     var btnRegistro = document.getElementById("btnRegistro");
     var aviso = document.getElementById("registroAviso");
+    var botonesSociales = document.querySelectorAll("#adminLoginScreen [data-proveedor]");
+
+    function mostrarErrorSocial(cancelado) {
+      errorEl.textContent = cancelado
+        ? "Cancelaste el inicio de sesión. Puedes intentarlo de nuevo."
+        : "No se pudo iniciar sesión con esa cuenta. Inténtalo de nuevo o usa tu correo.";
+      errorEl.style.display = "block";
+    }
+
+    var url = new URL(window.location.href);
+    var errorOAuth = url.searchParams.get("error") || new URLSearchParams(url.hash.slice(1)).get("error");
+    if (errorOAuth) {
+      mostrarErrorSocial(errorOAuth === "access_denied");
+      ["error", "error_code", "error_description"].forEach(function (parametro) {
+        url.searchParams.delete(parametro);
+      });
+      url.hash = "";
+      window.history.replaceState(null, "", url);
+    }
+
+    botonesSociales.forEach(function (boton) {
+      boton.addEventListener("click", async function () {
+        if (btnSubmit.disabled) return;
+        errorEl.style.display = "none";
+        aviso.hidden = true;
+        btnSubmit.disabled = true;
+        btnRegistro.disabled = true;
+        botonesSociales.forEach(function (opcion) { opcion.disabled = true; });
+
+        try {
+          var { error } = await window.supabase.auth.signInWithOAuth({
+            provider: boton.dataset.proveedor,
+            options: { redirectTo: new URL("Panel-de-admin.html", window.location.href).href }
+          });
+          if (error) throw error;
+        } catch (err) {
+          console.error("Error de autenticación con proveedor:", err);
+          mostrarErrorSocial(false);
+        } finally {
+          btnSubmit.disabled = false;
+          btnRegistro.disabled = false;
+          botonesSociales.forEach(function (opcion) { opcion.disabled = false; });
+        }
+      });
+    });
 
     if (form) {
       form.addEventListener("submit", async function (e) {
