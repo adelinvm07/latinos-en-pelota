@@ -1313,3 +1313,51 @@
   });
 
 })();
+
+  document.addEventListener("DOMContentLoaded", async function () {
+    const btnAdmin = document.getElementById("btnPanelAdmin");
+    if (!btnAdmin || !window.supabase) return;
+
+    const enlaceCuenta = document.getElementById("enlaceCuenta");
+    let sesionActiva = false;
+
+    enlaceCuenta.addEventListener("click", async function (evento) {
+      if (!sesionActiva) return;
+      evento.preventDefault();
+      try {
+        const { error } = await window.supabase.auth.signOut({ scope: "local" });
+        if (error) throw error;
+      } catch (err) {
+        console.error("Error al cerrar sesión:", err);
+        alert("No se pudo cerrar la sesión. Inténtalo de nuevo.");
+      }
+    });
+
+    function aplicarVisibilidadAdmin(session) {
+      sesionActiva = Boolean(session);
+      enlaceCuenta.textContent = sesionActiva ? "Cerrar sesión" : "Iniciar sesión";
+      enlaceCuenta.href = sesionActiva ? "latinos-en-pelota.html" : "Panel-de-admin.html";
+
+      const esAdmin = session && session.user && session.user.app_metadata && session.user.app_metadata.role === "admin";
+      btnAdmin.style.display = esAdmin ? "inline-block" : "none";
+    }
+
+    try {
+      const { data: { session } } = await window.supabase.auth.getSession();
+      if (session) {
+        const { data, error } = await window.supabase.auth.refreshSession();
+        aplicarVisibilidadAdmin(error ? null : data.session);
+      } else {
+        aplicarVisibilidadAdmin(null);
+      }
+
+      if (window.supabase.auth && window.supabase.auth.onAuthStateChange) {
+        window.supabase.auth.onAuthStateChange((_evento, sesionActual) => {
+          aplicarVisibilidadAdmin(sesionActual);
+        });
+      }
+    } catch (err) {
+      console.error("Error al verificar permisos:", err);
+      btnAdmin.style.display = "none";
+    }
+  });
