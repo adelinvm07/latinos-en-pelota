@@ -566,9 +566,6 @@
         '<div class="empty-state-icon">🏷️</div>' +
         '<h3>No hay categorías creadas aún</h3>' +
         '<p>Crea tu primera categoría para organizar las noticias del portal deportivo.</p>' +
-        '<div style="display:flex;gap:10px;margin-top:8px;">' +
-        '<button class="btn btn-primary" onclick="abrirModalNuevaCategoria()">+ Nueva Categoría</button>' +
-        '</div>' +
         '</div>';
       return;
     }
@@ -630,7 +627,6 @@
         '<div class="empty-state-icon">📰</div>' +
         '<h3>No se encontraron noticias</h3>' +
         '<p>' + (noticias.length === 0 ? "Aún no hay noticias." : "No hay noticias que coincidan con el filtro actual.") + '</p>' +
-        (noticias.length === 0 ? '<a href="crear-noticia.html" class="btn btn-primary" style="margin-top:10px;">+ Crear Primera Noticia</a>' : '') +
         '</div></td></tr>';
     } else {
       body.innerHTML = pageItems.map(function (item) {
@@ -1020,7 +1016,6 @@
         '<div class="empty-state-icon">📢</div>' +
         '<h3>No hay anuncios registrados</h3>' +
         '<p>Crea tu primer anuncio para monetizar el portal de noticias.</p>' +
-        '<button class="btn btn-primary" onclick="abrirModalNuevoAnuncio()" style="margin-top:10px;">+ Nuevo Anuncio</button>' +
         '</div></td></tr>';
       return;
     }

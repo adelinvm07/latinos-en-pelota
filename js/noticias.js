@@ -206,16 +206,16 @@
     await cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2);
 
     if (window.supabase && window.supabase.auth && window.supabase.auth.onAuthStateChange) {
-      window.supabase.auth.onAuthStateChange(async function (evento, nuevaSesion) {
+      window.supabase.auth.onAuthStateChange(function (evento, nuevaSesion) {
         sesionUsuario = nuevaSesion;
         if (evento === "USER_UPDATED") return;
         renderizarFormularioComentario(noticiaId, sesionUsuario, formBox);
-        await cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2);
+        setTimeout(function () { cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2); }, 0);
       });
     }
   }
 
-  function renderizarFormularioComentario(noticiaId, sesionUsuario, formBox) {
+  function renderizarFormularioComentario(noticiaId, sesionUsuario, formBox, respuestaA) {
     if (!formBox) formBox = document.getElementById("contenedor-form-comentario");
     if (!formBox) return;
 
@@ -224,17 +224,19 @@
     if (!sesionUsuario || !sesionUsuario.user) {
       var promptEl = document.createElement("div");
       promptEl.className = "comentarios-login-prompt";
-      promptEl.innerHTML = 'Para dejar un comentario, debes <a href="Panel-de-admin.html">iniciar sesión</a>.';
+      promptEl.innerHTML = 'Para comentar, responder o dar me gusta, debes <a href="Panel-de-admin.html">iniciar sesión</a>.';
       formBox.appendChild(promptEl);
       return;
     }
 
     var form = document.createElement("form");
     form.className = "comentario-form";
-    form.id = "form-nuevo-comentario";
+    if (!respuestaA) form.id = "form-nuevo-comentario";
 
     var textarea = document.createElement("textarea");
     textarea.placeholder = "Escribe tu comentario sobre esta noticia (máx. 500 caracteres)...";
+    if (respuestaA) textarea.placeholder = "Responde a " + (respuestaA.autor || "Lector") + " (máx. 500 caracteres)...";
+    textarea.setAttribute("aria-label", respuestaA ? "Tu respuesta" : "Tu comentario");
     textarea.maxLength = 500;
     textarea.required = true;
 
@@ -252,10 +254,24 @@
     var btn = document.createElement("button");
     btn.type = "submit";
     btn.className = "btn-comentar";
-    btn.textContent = "Publicar Comentario";
+    btn.textContent = respuestaA ? "Publicar respuesta" : "Publicar Comentario";
 
     footer.appendChild(contador);
     footer.appendChild(btn);
+    if (respuestaA) {
+      var cancelar = document.createElement("button");
+      cancelar.type = "button";
+      cancelar.className = "comentario-cancelar";
+      cancelar.textContent = "Cancelar";
+      cancelar.onclick = function () {
+        formBox.hidden = true;
+        var abrir = formBox.parentNode.querySelector(".comentario-responder");
+        abrir.setAttribute("aria-expanded", "false");
+        abrir.focus();
+        formBox.textContent = "";
+      };
+      footer.appendChild(cancelar);
+    }
 
     var userBar = document.createElement("div");
     userBar.className = "comentario-usuario-bar";
@@ -338,7 +354,8 @@
             noticia_id: noticiaId,
             user_id: user.id,
             autor: autor,
-            contenido: texto
+            contenido: texto,
+            ...(respuestaA ? { parent_id: respuestaA.id } : {})
           }]);
 
         if (error) throw error;
@@ -353,111 +370,198 @@
         alert("Error al publicar comentario: " + (err.message || "Inténtalo más tarde"));
       } finally {
         btn.disabled = false;
-        btn.textContent = "Publicar Comentario";
+        btn.textContent = respuestaA ? "Publicar respuesta" : "Publicar Comentario";
       }
     });
 
     formBox.appendChild(form);
   }
 
+  var versionComentarios = 0;
+
   async function cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2) {
     if (!listaBox) listaBox = document.getElementById("lista-comentarios");
     if (!tituloH2) tituloH2 = document.getElementById("comentarios-titulo");
     if (!listaBox) return;
-
+    var version = ++versionComentarios;
     try {
-      var { data: comentarios, error } = await window.supabase
-        .from("comentarios")
-        .select("id, noticia_id, user_id, autor, contenido, created_at")
-        .eq("noticia_id", noticiaId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      var total = comentarios ? comentarios.length : 0;
-      if (tituloH2) {
-        tituloH2.textContent = "Comentarios (" + total + ")";
+      var resultado = await window.supabase.from("comentarios")
+        .select("id, noticia_id, user_id, autor, contenido, created_at, parent_id")
+        .eq("noticia_id", noticiaId).order("created_at", { ascending: false });
+      var interacciones = true;
+      if (resultado.error && (resultado.error.code === "42703" || resultado.error.code === "PGRST204")) {
+        // Los comentarios existentes siguen disponibles antes de aplicar la migración.
+        interacciones = false;
+        resultado = await window.supabase.from("comentarios")
+          .select("id, noticia_id, user_id, autor, contenido, created_at")
+          .eq("noticia_id", noticiaId).order("created_at", { ascending: false });
       }
-
-      listaBox.innerHTML = "";
-
-      if (!comentarios || comentarios.length === 0) {
+      if (resultado.error) throw resultado.error;
+      var comentarios = resultado.data || [];
+      var resumen = new Map();
+      if (interacciones && comentarios.length) {
+        var likes = await window.supabase.rpc("resumen_likes_comentarios", { p_noticia_id: noticiaId });
+        if (likes.error) {
+          console.warn("No se pudieron cargar los likes:", likes.error);
+          interacciones = false;
+        } else {
+          (likes.data || []).forEach(function (r) { resumen.set(String(r.comentario_id), r); });
+        }
+      }
+      if (version !== versionComentarios) return;
+      tituloH2.textContent = "Comentarios (" + comentarios.length + ")";
+      listaBox.textContent = "";
+      if (!interacciones) {
+        var aviso = document.createElement("p");
+        aviso.className = "comentarios-aviso";
+        aviso.textContent = "Los likes y las respuestas no están disponibles en este momento.";
+        listaBox.appendChild(aviso);
+      }
+      if (!comentarios.length) {
         var empty = document.createElement("div");
         empty.className = "sin-comentarios";
         empty.textContent = "Aún no hay comentarios en esta noticia. ¡Sé el primero en opinar!";
         listaBox.appendChild(empty);
         return;
       }
-
       var currentUser = sesionUsuario ? sesionUsuario.user : null;
       var esAdmin = currentUser && currentUser.app_metadata && currentUser.app_metadata.role === "admin";
-
-      comentarios.forEach(function (c) {
-        var itemEl = document.createElement("div");
-        itemEl.className = "comentario-item";
-
+      var porId = new Map(comentarios.map(function (c) { return [String(c.id), c]; }));
+      var hijos = new Map();
+      comentarios.slice().reverse().forEach(function (c) {
+        if (c.parent_id == null || !porId.has(String(c.parent_id))) return;
+        var clave = String(c.parent_id);
+        if (!hijos.has(clave)) hijos.set(clave, []);
+        hijos.get(clave).push(c);
+      });
+      var vistos = new Set();
+      var pendientes = comentarios.filter(function (c) {
+        return c.parent_id == null || !porId.has(String(c.parent_id));
+      }).reverse();
+      // Una pila mantiene el orden del hilo sin anidar indefinidamente el diseño móvil.
+      function agregarComentario(c) {
+        var itemEl = document.createElement("article");
+        itemEl.className = "comentario-item" + (c.parent_id != null ? " comentario-respuesta" : "");
         var headerEl = document.createElement("div");
         headerEl.className = "comentario-header";
-
         var autorEl = document.createElement("span");
         autorEl.className = "comentario-autor";
-        autorEl.textContent = c.autor || "Anónimo";
-
+        autorEl.textContent = c.autor || "Lector";
         var fechaEl = document.createElement("span");
         fechaEl.className = "comentario-fecha";
         fechaEl.textContent = formatearFecha(c.created_at);
-
-        headerEl.appendChild(autorEl);
-        headerEl.appendChild(fechaEl);
+        headerEl.append(autorEl, fechaEl);
         itemEl.appendChild(headerEl);
-
+        var padre = porId.get(String(c.parent_id));
+        if (padre) {
+          var contexto = document.createElement("p");
+          contexto.className = "comentario-contexto";
+          contexto.textContent = "En respuesta a " + (padre.autor || "Lector");
+          itemEl.appendChild(contexto);
+        }
         var textoEl = document.createElement("p");
         textoEl.className = "comentario-texto";
         textoEl.textContent = c.contenido;
         itemEl.appendChild(textoEl);
-
+        var accionesEl = document.createElement("div");
+        accionesEl.className = "comentario-acciones comentario-interacciones";
+        if (interacciones) {
+          var datosLike = resumen.get(String(c.id)) || { total: 0, propio: false };
+          var btnLike = document.createElement("button");
+          btnLike.type = "button";
+          btnLike.className = "comentario-like";
+          function pintarLike() {
+            btnLike.textContent = "♥ Me gusta · " + datosLike.total;
+            btnLike.setAttribute("aria-pressed", String(datosLike.propio));
+            btnLike.setAttribute("aria-label", (datosLike.propio ? "Quitar me gusta" : "Me gusta") + ": " + datosLike.total);
+          }
+          pintarLike();
+          btnLike.disabled = !!currentUser && currentUser.id === c.user_id;
+          if (btnLike.disabled) btnLike.title = "Este es tu comentario";
+          btnLike.onclick = async function () {
+            if (!currentUser) { window.location.href = "Panel-de-admin.html"; return; }
+            btnLike.disabled = true;
+            try {
+              var cambio = datosLike.propio
+                ? await window.supabase.from("comentario_likes").delete().eq("comentario_id", c.id).eq("user_id", currentUser.id)
+                : await window.supabase.from("comentario_likes").insert({ comentario_id: c.id, user_id: currentUser.id });
+              if (cambio.error && cambio.error.code !== "23505") throw cambio.error;
+              var actualizado = await window.supabase.rpc("resumen_likes_comentarios", { p_noticia_id: noticiaId });
+              if (actualizado.error) throw actualizado.error;
+              datosLike = (actualizado.data || []).find(function (r) { return String(r.comentario_id) === String(c.id); }) || { total: 0, propio: false };
+              pintarLike();
+            } catch (err) {
+              console.error("Error al guardar like:", err);
+              alert("No pudimos actualizar tu me gusta. Inténtalo de nuevo.");
+            } finally { btnLike.disabled = false; }
+          };
+          var btnResponder = document.createElement("button");
+          btnResponder.type = "button";
+          btnResponder.className = "comentario-responder";
+          btnResponder.textContent = "Responder";
+          btnResponder.setAttribute("aria-expanded", "false");
+          var respuestaBox = document.createElement("div");
+          respuestaBox.className = "comentario-respuesta-form";
+          respuestaBox.hidden = true;
+          btnResponder.onclick = function () {
+            if (!currentUser) { window.location.href = "Panel-de-admin.html"; return; }
+            var abrir = respuestaBox.hidden;
+            respuestaBox.hidden = !abrir;
+            btnResponder.setAttribute("aria-expanded", String(abrir));
+            if (abrir) {
+              renderizarFormularioComentario(noticiaId, sesionUsuario, respuestaBox, c);
+              respuestaBox.querySelector("textarea").focus();
+            } else { respuestaBox.textContent = ""; }
+          };
+          accionesEl.append(btnLike, btnResponder);
+          itemEl.appendChild(respuestaBox);
+        }
         if (currentUser && (currentUser.id === c.user_id || esAdmin)) {
-          var accionesEl = document.createElement("div");
-          accionesEl.className = "comentario-acciones";
-
           var btnBorrar = document.createElement("button");
+          btnBorrar.type = "button";
           btnBorrar.className = "btn-borrar-comentario";
           btnBorrar.textContent = "Eliminar";
           btnBorrar.onclick = async function () {
-            if (!confirm("¿Deseas eliminar este comentario?")) return;
+            if (!confirm("¿Deseas eliminar este comentario? Las respuestas de otras personas se conservarán.")) return;
             btnBorrar.disabled = true;
             try {
-              var { error: delError } = await window.supabase
-                .from("comentarios")
-                .delete()
-                .eq("id", c.id);
-
-              if (delError) throw delError;
-
+              var borrado = await window.supabase.from("comentarios").delete().eq("id", c.id).select("id");
+              if (borrado.error) throw borrado.error;
+              if (!borrado.data || !borrado.data.length) throw new Error("No tienes permiso para eliminar este comentario.");
               await cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2);
             } catch (err) {
-              console.error("Error al eliminar comentario:", err);
-              alert("Error al eliminar comentario: " + err.message);
+              alert("No se pudo eliminar el comentario: " + err.message);
               btnBorrar.disabled = false;
             }
           };
-
           accionesEl.appendChild(btnBorrar);
-          itemEl.appendChild(accionesEl);
         }
-
+        itemEl.insertBefore(accionesEl, itemEl.querySelector(".comentario-respuesta-form"));
         listaBox.appendChild(itemEl);
-      });
-
+      }
+      function recorrer() {
+        while (pendientes.length) {
+          var c = pendientes.pop();
+          if (vistos.has(String(c.id))) continue;
+          vistos.add(String(c.id));
+          agregarComentario(c);
+          (hijos.get(String(c.id)) || []).slice().reverse().forEach(function (hijo) { pendientes.push(hijo); });
+        }
+      }
+      recorrer();
+      // Conserva visibles registros huérfanos o antiguos con relaciones inconsistentes.
+      comentarios.forEach(function (c) { if (!vistos.has(String(c.id))) { pendientes.push(c); recorrer(); } });
     } catch (err) {
+      if (version !== versionComentarios) return;
       console.error("Error al cargar comentarios:", err);
-      listaBox.innerHTML = "";
+      listaBox.textContent = "";
       var errorMsg = document.createElement("div");
       errorMsg.className = "sin-comentarios";
       errorMsg.textContent = "No se pudieron cargar los comentarios en este momento.";
       listaBox.appendChild(errorMsg);
     }
   }
+
 
   async function cargarNoticia() {
     var params = new URLSearchParams(window.location.search);

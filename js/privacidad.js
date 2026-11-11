@@ -3,7 +3,12 @@
 
   async function actualizarBotonAdmin() {
     var btnVolver = document.querySelector(".priv-inicio");
-    if (!btnVolver || !window.supabase || !window.supabase.auth) return;
+    if (!btnVolver) return;
+
+    btnVolver.textContent = "Volver al inicio";
+    btnVolver.href = "latinos-en-pelota.html";
+    var desdePanel = new URLSearchParams(window.location.search).get("origen") === "panel";
+    if (!desdePanel || !window.supabase || !window.supabase.auth) return;
 
     function aplicarRol(session) {
       var esAdmin = Boolean(
@@ -23,8 +28,9 @@
     }
 
     try {
-      var { data: { session } } = await window.supabase.auth.getSession();
-      aplicarRol(session);
+      var { data, error } = await window.supabase.auth.getSession();
+      if (error) throw error;
+      aplicarRol(data ? data.session : null);
 
       if (window.supabase.auth.onAuthStateChange) {
         window.supabase.auth.onAuthStateChange(function (_event, sesionActual) {
@@ -32,6 +38,7 @@
         });
       }
     } catch (e) {
+      aplicarRol(null);
       console.warn("No se pudo verificar la sesión en política de privacidad:", e);
     }
   }

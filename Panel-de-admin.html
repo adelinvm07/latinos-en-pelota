@@ -64,7 +64,6 @@
       <div class="brand-mark" style="width:30px;height:30px;font-size:14px;border-radius:8px;">LP</div>
       <strong>Latinos en Pelota</strong>
     </div>
-    <a href="crear-noticia.html" class="btn btn-primary btn-sm">+ Noticia</a>
   </div>
 
   <aside class="sidebar" id="sidebar">
@@ -76,10 +75,6 @@
       </div>
     </div>
 
-    <a href="crear-noticia.html" class="sidebar-action-btn">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-      Crear Noticia
-    </a>
 
     <div class="nav-group-label">Contenido</div>
     <button class="nav-item active" data-section="resumen">
@@ -114,7 +109,7 @@
       <span>Usuarios</span>
     </button>
 
-    <a href="politica-de-privacidad.html" class="nav-item">Política de privacidad</a>
+    <a href="politica-de-privacidad.html?origen=panel" class="nav-item">Política de privacidad</a>
     <div class="sidebar-foot" id="sidebarUserFoot">
       <div class="avatar" id="userAvatar">--</div>
       <div class="avatar-info" style="flex:1;overflow:hidden;">
@@ -195,7 +190,6 @@
               <option value="borrador">Borrador</option>
             </select>
           </div>
-          <a href="crear-noticia.html" class="btn btn-primary btn-sm">+ Redactar Noticia</a>
         </div>
 
         <div class="table-wrap">
@@ -230,9 +224,6 @@
             <h3 style="font-size:16px;font-weight:700;">Categorías del Portal</h3>
             <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">Organiza los deportes y secciones. Puedes agregar, modificar y eliminar categorías con Supabase.</p>
           </div>
-          <div>
-            <button class="btn btn-primary btn-sm" onclick="abrirModalNuevaCategoria()">+ Nueva Categoría</button>
-          </div>
         </div>
 
         <div class="card-grid" id="categoriasGrid">
@@ -255,9 +246,6 @@
           <div>
             <h3 style="font-size:16px;font-weight:700;">Espacios Publicitarios</h3>
             <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">Gestiona los banners y anuncios que aparecen en el portal público.</p>
-          </div>
-          <div>
-            <button class="btn btn-primary btn-sm" onclick="abrirModalNuevoAnuncio()">+ Nuevo Anuncio</button>
           </div>
         </div>
 
