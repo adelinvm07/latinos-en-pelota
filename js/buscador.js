@@ -294,28 +294,42 @@
     });
   }
 
+  var anunciosCargados = false;
+
+  function barajar(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var temp = a[i];
+      a[i] = a[j];
+      a[j] = temp;
+    }
+    return a;
+  }
+
   async function cargarAnuncios() {
     var asideSidebar = document.getElementById("sidebar-anuncios");
-    if (!asideSidebar) return;
-
-    if (!window.cookiesOpcionales) {
-      asideSidebar.textContent = "";
-      return;
-    }
-    if (!window.supabase) return;
+    if (!asideSidebar || !window.supabase) return;
+    if (anunciosCargados && asideSidebar.children.length > 0) return;
 
     try {
       var { data, error } = await window.supabase
         .from("anuncios")
         .select("id, titulo, imagen_url, enlace_url, ubicacion, activo")
-        .eq("activo", true)
-        .eq("ubicacion", "sidebar")
-        .order("id", { ascending: true });
+        .eq("activo", true);
 
       if (error) throw error;
-      if (!window.cookiesOpcionales) return;
 
-      asideSidebar.innerHTML = (data || []).map(function (ad) {
+      anunciosCargados = true;
+      var anunciosAleatorios = barajar(data || []);
+      var vistos = new Set();
+      var anunciosSinDuplicados = anunciosAleatorios.filter(function (ad) {
+        if (!ad || vistos.has(ad.id)) return false;
+        vistos.add(ad.id);
+        return true;
+      });
+
+      asideSidebar.innerHTML = anunciosSinDuplicados.map(function (ad) {
         return (
           '<div class="ad-card">' +
             '<div class="media">' +
@@ -369,7 +383,7 @@
     }
     await cargarCategorias();
     inicializarEventos();
-    await cargarNoticias();
+    await Promise.all([cargarNoticias(), cargarAnuncios()]);
     window.addEventListener("preferencias-cookies", aplicarPreferenciasPortada);
     aplicarPreferenciasPortada();
   }

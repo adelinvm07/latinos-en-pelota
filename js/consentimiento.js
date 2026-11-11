@@ -10,7 +10,7 @@
   banner.setAttribute("aria-labelledby", "ck-titulo");
   banner.innerHTML =
     '<h2 id="ck-titulo">Preferencias de cookies</h2>' +
-    '<p>La sesión y tu elección se guardan en este navegador. Con tu permiso, medimos visitas y mostramos anuncios externos. ' +
+    '<p>La sesión y tu elección se guardan en este navegador. Con tu permiso, medimos visitas y estadísticas de navegación. ' +
     '<a href="politica-de-privacidad.html#cookies">Más información</a>.</p>' +
     '<div class="ck-acciones">' +
       '<button class="ck-boton ck-aceptar" type="button">Aceptar</button>' +

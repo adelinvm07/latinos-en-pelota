@@ -48,25 +48,141 @@
       "</div>";
   }
 
-  function pintarNoticia(n) {
+  var IMAGEN_PLACEHOLDER = "assets/Logo latinos .png";
+
+  function barajar(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var temp = a[i];
+      a[i] = a[j];
+      a[j] = temp;
+    }
+    return a;
+  }
+
+  function crearMarkupBannerHorizontal(ad) {
+    return (
+      '<div class="ad-top-horizontal">' +
+        '<div class="ad-top-badge">PUBLICIDAD</div>' +
+        '<a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer" class="ad-top-content">' +
+          '<div class="ad-top-thumb">' +
+            '<img src="' + escapeHtml(ad.imagen_url) + '" alt="' + escapeHtml(ad.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
+          '</div>' +
+          '<div class="ad-top-info">' +
+            '<span class="ad-top-title">' + escapeHtml(ad.titulo) + '</span>' +
+          '</div>' +
+          '<span class="ad-top-cta">Ver oferta →</span>' +
+        '</a>' +
+      '</div>'
+    );
+  }
+
+  function crearMarkupAnuncioLateral(ad) {
+    return (
+      '<div class="ad-card-lateral">' +
+        '<div class="ad-card-lateral-header">' +
+          '<span class="ad-label">PUBLICIDAD</span>' +
+        '</div>' +
+        '<div class="ad-card-lateral-media">' +
+          '<a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer">' +
+            '<img src="' + escapeHtml(ad.imagen_url) + '" alt="' + escapeHtml(ad.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
+          '</a>' +
+        '</div>' +
+        '<div class="ad-card-lateral-body">' +
+          '<h4>' + escapeHtml(ad.titulo) + '</h4>' +
+          '<a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer" class="btn-ad">Ver oferta →</a>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  async function insertarAnunciosNoticia() {
+    if (!window.supabase) return;
+
+    var topSlot = document.getElementById("noticia-top-ad");
+    var sidebarSlot = document.getElementById("noticia-sidebar-ad");
+    var layout = document.getElementById("noticia-layout");
+
+    if (!topSlot || !sidebarSlot) return;
+
+    var anuncios = [];
+    try {
+      var { data, error } = await window.supabase
+        .from("anuncios")
+        .select("id, titulo, imagen_url, enlace_url, ubicacion, activo")
+        .eq("activo", true);
+      if (error) throw error;
+      anuncios = data || [];
+    } catch (e) {
+      console.warn("No se pudieron cargar anuncios para la noticia:", e);
+      return;
+    }
+
+    if (anuncios.length === 0) return;
+
+    var pool = barajar(anuncios);
+
+    // Variar aleatoriamente si el lateral va a la derecha o a la izquierda
+    if (layout) {
+      layout.classList.remove("lateral-derecho", "lateral-izquierdo");
+      var lado = Math.random() < 0.5 ? "lateral-derecho" : "lateral-izquierdo";
+      layout.classList.add(lado);
+    }
+
+    if (pool.length === 1) {
+      // 1 solo anuncio: ubicar aleatoriamente en la barra superior horizontal o en el lateral
+      var pos = Math.random() < 0.5 ? "arriba" : "lateral";
+      var ad = pool[0];
+
+      if (pos === "arriba") {
+        topSlot.innerHTML = crearMarkupBannerHorizontal(ad);
+      } else {
+        sidebarSlot.innerHTML = crearMarkupAnuncioLateral(ad);
+      }
+    } else {
+      // 2 o más anuncios: mostrar uno arriba (horizontal) y otro en el lateral, sin repetir
+      var adTop = pool[0];
+      var adLateral = pool[1];
+
+      // Alternar aleatoriamente cuál de los dos anuncios va arriba y cuál al lateral
+      if (Math.random() < 0.5) {
+        topSlot.innerHTML = crearMarkupBannerHorizontal(adTop);
+        sidebarSlot.innerHTML = crearMarkupAnuncioLateral(adLateral);
+      } else {
+        topSlot.innerHTML = crearMarkupBannerHorizontal(adLateral);
+        sidebarSlot.innerHTML = crearMarkupAnuncioLateral(adTop);
+      }
+    }
+  }
+
+  async function pintarNoticia(n) {
     var categoria = n.categorias ? n.categorias.nombre : "General";
     var fecha = formatearFecha(n.publicado_en);
 
     document.title = n.titulo + " | Latinos en Pelota";
 
     contenedor.innerHTML =
-      '<article class="noticia">' +
-        '<span class="tag ' + obtenerClaseTag(categoria) + '">' + escapeHtml(categoria.toUpperCase()) + "</span>" +
-        "<h1>" + escapeHtml(n.titulo) + "</h1>" +
-        (n.subtitulo ? '<p class="subtitulo">' + escapeHtml(n.subtitulo) + "</p>" : "") +
-        '<div class="byline">Redacción' + (fecha ? " · " + fecha : "") + "</div>" +
-        (n.imagen_url
-          ? '<figure class="portada"><img src="' + escapeHtml(n.imagen_url) + '" alt="' + escapeHtml(n.titulo) + '" onerror="this.parentNode.style.display=\'none\'"></figure>'
-          : "") +
-        '<div class="contenido">' + prepararContenido(n.contenido) + "</div>" +
-      "</article>";
+      '<div id="noticia-top-ad" class="noticia-top-ad-slot"></div>' +
+      '<div class="noticia-grid-layout lateral-derecho" id="noticia-layout">' +
+        '<div class="noticia-main-col">' +
+          '<article class="noticia">' +
+            '<span class="tag ' + obtenerClaseTag(categoria) + '">' + escapeHtml(categoria.toUpperCase()) + "</span>" +
+            "<h1>" + escapeHtml(n.titulo) + "</h1>" +
+            (n.subtitulo ? '<p class="subtitulo">' + escapeHtml(n.subtitulo) + "</p>" : "") +
+            '<div class="byline">Redacción' + (fecha ? " · " + fecha : "") + "</div>" +
+            (n.imagen_url
+              ? '<figure class="portada"><img src="' + escapeHtml(n.imagen_url) + '" alt="' + escapeHtml(n.titulo) + '" onerror="this.parentNode.style.display=\'none\'"></figure>'
+              : "") +
+            '<div class="contenido">' + prepararContenido(n.contenido) + "</div>" +
+          "</article>" +
+          '<div id="contenedor-comentarios-wrap"></div>' +
+        '</div>' +
+        '<aside class="noticia-sidebar-ad" id="noticia-sidebar-ad"></aside>' +
+      '</div>';
 
-    inicializarComentarios(n.id);
+    await inicializarComentarios(n.id);
+    await insertarAnunciosNoticia();
   }
 
   async function inicializarComentarios(noticiaId) {
@@ -97,7 +213,8 @@
     listaBox.id = "lista-comentarios";
     wrap.appendChild(listaBox);
 
-    contenedor.appendChild(wrap);
+    var destinoComentarios = document.getElementById("contenedor-comentarios-wrap") || contenedor;
+    destinoComentarios.appendChild(wrap);
 
     renderizarFormularioComentario(noticiaId, sesionUsuario, formBox);
     await cargarListaComentarios(noticiaId, sesionUsuario, listaBox, tituloH2);
@@ -153,12 +270,29 @@
 
     footer.appendChild(contador);
     footer.appendChild(btn);
-    var cambiarNombre = document.createElement("button");
-    cambiarNombre.type = "button";
-    cambiarNombre.className = "btn-borrar-comentario";
-    cambiarNombre.textContent = "Cambiar nombre de usuario";
-    cambiarNombre.addEventListener("click", async function () {
-      var actual = sesionUsuario.user.user_metadata?.nombre || sesionUsuario.user.user_metadata?.full_name || "";
+
+    var userBar = document.createElement("div");
+    userBar.className = "comentario-usuario-bar";
+
+    var userInfo = document.createElement("div");
+    userInfo.className = "comentario-usuario-info";
+
+    var userActual = (sesionUsuario.user.user_metadata && (sesionUsuario.user.user_metadata.nombre || sesionUsuario.user.user_metadata.full_name))
+      || (sesionUsuario.user.email ? sesionUsuario.user.email.split("@")[0] : "Lector");
+
+    var userLabel = document.createElement("span");
+    userLabel.className = "comentario-usuario-label";
+    userLabel.innerHTML = 'Comentando como: <strong class="comentario-usuario-nombre">' + escapeHtml(userActual) + '</strong>';
+
+    var btnCambiar = document.createElement("button");
+    btnCambiar.type = "button";
+    btnCambiar.className = "btn-cambiar-nombre";
+    btnCambiar.title = "Cambiar el nombre que se mostrará en tus comentarios";
+    btnCambiar.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>Cambiar nombre';
+
+    btnCambiar.addEventListener("click", async function () {
+      var actual = (sesionUsuario.user.user_metadata && (sesionUsuario.user.user_metadata.nombre || sesionUsuario.user.user_metadata.full_name))
+        || (sesionUsuario.user.email ? sesionUsuario.user.email.split("@")[0] : "");
       var nombre = window.prompt("Elige el nombre que se mostrará en tus comentarios.", actual);
       if (nombre === null) return;
       nombre = nombre.trim();
@@ -167,21 +301,26 @@
         return;
       }
 
-      cambiarNombre.disabled = true;
+      btnCambiar.disabled = true;
       try {
         var { data, error } = await window.supabase.auth.updateUser({ data: { nombre: nombre } });
         if (error) throw error;
         sesionUsuario.user = data.user;
-        cambiarNombre.textContent = "Cambiar nombre de usuario (" + nombre + ")";
+        var nombreEl = userLabel.querySelector(".comentario-usuario-nombre");
+        if (nombreEl) nombreEl.textContent = nombre;
       } catch (err) {
         console.error("Error al guardar el nombre:", err);
         alert("No pudimos guardar tu nombre. Inténtalo de nuevo.");
       } finally {
-        cambiarNombre.disabled = false;
+        btnCambiar.disabled = false;
       }
     });
 
-    form.appendChild(cambiarNombre);
+    userInfo.appendChild(userLabel);
+    userInfo.appendChild(btnCambiar);
+    userBar.appendChild(userInfo);
+
+    form.appendChild(userBar);
     form.appendChild(textarea);
     form.appendChild(footer);
 
@@ -205,7 +344,7 @@
       try {
         var user = sesionUsuario.user;
         var autor = (user.user_metadata && (user.user_metadata.nombre || user.user_metadata.full_name))
-          || "Lector";
+          || (user.email ? user.email.split("@")[0] : "Lector");
 
         var { error } = await window.supabase
           .from("comentarios")
@@ -366,7 +505,7 @@
         return;
       }
 
-      pintarNoticia(respuesta.data);
+      await pintarNoticia(respuesta.data);
     } catch (err) {
       console.error("Error cargando la noticia desde Supabase:", err);
       mostrarMensaje("No pudimos cargar la noticia", "Revisa tu conexión e inténtalo de nuevo.");
