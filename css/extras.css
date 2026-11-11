@@ -193,8 +193,9 @@
 
 .noticia-grid-layout {
   display: flex;
-  gap: 36px;
+  gap: 28px;
   align-items: flex-start;
+  justify-content: center;
 }
 
 .noticia-grid-layout.lateral-derecho {
@@ -214,10 +215,8 @@
 }
 
 .noticia-sidebar-ad {
-  width: 280px;
+  width: 220px;
   flex-shrink: 0;
-  position: sticky;
-  top: 24px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -332,9 +331,17 @@
 
 @media (max-width: 600px) {
   .ad-top-horizontal {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
     padding: 8px 10px;
+  }
+
+  .ad-top-content {
+    gap: 8px;
+  }
+
+  .ad-top-cta {
+    display: none;
   }
 }
 
@@ -367,7 +374,7 @@
 
 .ad-card-lateral-media {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 7;
   background: var(--navy, #0f1a2e);
   overflow: hidden;
 }

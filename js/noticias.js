@@ -97,62 +97,41 @@
     );
   }
 
+  var anuncioNoticia = null;
+  var pantallaEstrecha = window.matchMedia("(max-width: 980px)");
+
+  function colocarAnuncioNoticia() {
+    var topSlot = document.getElementById("noticia-top-ad");
+    var sidebarSlot = document.getElementById("noticia-sidebar-ad");
+    if (!topSlot || !sidebarSlot) return;
+
+    topSlot.textContent = "";
+    sidebarSlot.textContent = "";
+    if (!anuncioNoticia) return;
+
+    if (pantallaEstrecha.matches) {
+      topSlot.innerHTML = crearMarkupBannerHorizontal(anuncioNoticia);
+    } else {
+      sidebarSlot.innerHTML = crearMarkupAnuncioLateral(anuncioNoticia);
+    }
+  }
+
+  pantallaEstrecha.addEventListener("change", colocarAnuncioNoticia);
+
   async function insertarAnunciosNoticia() {
     if (!window.supabase) return;
 
-    var topSlot = document.getElementById("noticia-top-ad");
-    var sidebarSlot = document.getElementById("noticia-sidebar-ad");
-    var layout = document.getElementById("noticia-layout");
-
-    if (!topSlot || !sidebarSlot) return;
-
-    var anuncios = [];
     try {
       var { data, error } = await window.supabase
         .from("anuncios")
         .select("id, titulo, imagen_url, enlace_url, ubicacion, activo")
         .eq("activo", true);
       if (error) throw error;
-      anuncios = data || [];
+
+      anuncioNoticia = barajar(data || [])[0] || null;
+      colocarAnuncioNoticia();
     } catch (e) {
       console.warn("No se pudieron cargar anuncios para la noticia:", e);
-      return;
-    }
-
-    if (anuncios.length === 0) return;
-
-    var pool = barajar(anuncios);
-
-    // Variar aleatoriamente si el lateral va a la derecha o a la izquierda
-    if (layout) {
-      layout.classList.remove("lateral-derecho", "lateral-izquierdo");
-      var lado = Math.random() < 0.5 ? "lateral-derecho" : "lateral-izquierdo";
-      layout.classList.add(lado);
-    }
-
-    if (pool.length === 1) {
-      // 1 solo anuncio: ubicar aleatoriamente en la barra superior horizontal o en el lateral
-      var pos = Math.random() < 0.5 ? "arriba" : "lateral";
-      var ad = pool[0];
-
-      if (pos === "arriba") {
-        topSlot.innerHTML = crearMarkupBannerHorizontal(ad);
-      } else {
-        sidebarSlot.innerHTML = crearMarkupAnuncioLateral(ad);
-      }
-    } else {
-      // 2 o más anuncios: mostrar uno arriba (horizontal) y otro en el lateral, sin repetir
-      var adTop = pool[0];
-      var adLateral = pool[1];
-
-      // Alternar aleatoriamente cuál de los dos anuncios va arriba y cuál al lateral
-      if (Math.random() < 0.5) {
-        topSlot.innerHTML = crearMarkupBannerHorizontal(adTop);
-        sidebarSlot.innerHTML = crearMarkupAnuncioLateral(adLateral);
-      } else {
-        topSlot.innerHTML = crearMarkupBannerHorizontal(adLateral);
-        sidebarSlot.innerHTML = crearMarkupAnuncioLateral(adTop);
-      }
     }
   }
 
