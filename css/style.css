@@ -567,3 +567,589 @@ footer a:hover {
 .header-search button:hover {
     color: var(--text-light);
 }
+
+/* ==========================================
+   ESTILOS GENERALES Y ESTRUCTURA (Extraídos de latinos-en-pelota.html)
+   ========================================== */
+  :root{
+    --navy:#0f1a2e;
+    --navy2:#13213a;
+    --text:#1a2333;
+    --muted:#6b7688;
+    --line:#e7e9ee;
+    --bg:#f5f6f8;
+    --yellow:#f2c14e;
+    --red:#d64545;
+    --blue:#3d7fc7;
+    --green:#3f8f5f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  a{color:inherit;text-decoration:none;}
+  img{display:block;width:100%;height:100%;object-fit:cover;}
+
+  header.site{
+    background:var(--navy);
+    color:#fff;
+    padding:22px 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+
+  .logo{
+    width:52px;height:52px;border-radius:50%;
+    background:#fff;
+    border:2px solid var(--yellow);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    padding:4px;
+    flex-shrink:0;
+  }
+  .logo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    border-radius:50%;
+  }
+
+  .brand h1{margin:0;font-size:22px;font-weight:700;}
+  .brand p{margin:2px 0 0;font-size:13px;color:#9fb0c9;}
+  .date{color:#9fb0c9;font-size:14px;white-space:nowrap;}
+
+  nav.tabs{
+    background:var(--navy2);
+    display:flex;align-items:center;gap:28px;
+    padding:0 32px;
+    overflow-x:auto;
+  }
+  nav.tabs a{
+    color:#c3cede;font-size:14px;font-weight:600;
+    padding:16px 2px;border-bottom:3px solid transparent;
+    white-space:nowrap;
+  }
+  nav.tabs a.active{color:#fff;border-color:var(--red);}
+
+  /* Contenedor del buscador y filtro de fechas */
+  .nav-controls {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Estilos para el filtro por fecha */
+  .date-select {
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 20px;
+    padding: 7px 12px;
+    color: #fff;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .date-select option {
+    background: var(--navy2);
+    color: #fff;
+  }
+  .date-select:focus {
+    background: rgba(255, 255, 255, .14);
+    border-color: var(--yellow);
+  }
+
+  .search-box{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:20px;
+    padding:7px 14px;
+    flex-shrink:0;
+  }
+  .search-box svg{flex-shrink:0;opacity:.7;}
+  .search-box input{
+    background:transparent;border:none;outline:none;
+    color:#fff;font-size:13px;font-family:inherit;
+    width:140px;
+  }
+  .search-box input::placeholder{color:#8394ab;}
+  .search-box:focus-within{
+    background:rgba(255,255,255,.14);
+    border-color:var(--yellow);
+  }
+
+  @media (max-width:768px){
+    .nav-controls{
+      margin-top: 8px;
+      margin-bottom: 8px;
+      width: 100%;
+      justify-content: space-between;
+    }
+    .search-box input{width:100px;}
+  }
+
+  main{
+    max-width:1200px;margin:0 auto;
+    padding:28px 32px 60px;
+    display:grid;
+    grid-template-columns:1fr 300px;
+    gap:28px;
+  }
+  @media (max-width:880px){
+    main{grid-template-columns:1fr;}
+  }
+
+  /* ===== Etiquetas de categoría ===== */
+  .tag{
+    display:inline-block;font-size:12px;font-weight:800;
+    padding:5px 10px;border-radius:3px;margin-bottom:14px;
+    color:#101010;
+  }
+  .tag.futbol{background:var(--yellow);}
+  .tag.futbol-red{background:var(--red);color:#fff;}
+  .tag.baloncesto{background:var(--blue);color:#fff;}
+  .tag.atletismo{background:var(--green);color:#fff;}
+
+  /* ===== Banner principal: texto sobre la foto ===== */
+  .hero{
+    grid-column:1;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    min-height:400px;
+    background:var(--navy);
+    border-radius:12px;
+    overflow:hidden;
+    color:#fff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.25s ease;
+    cursor: pointer;
+    animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .hero:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    border-color: #cbd5e1;
+  }
+  .hero .media{
+    position:absolute;
+    inset:0;
+    background:#000;
+  }
+  .hero .media::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:linear-gradient(to top,
+      rgba(15,26,46,.95) 0%,
+      rgba(15,26,46,.70) 35%,
+      rgba(15,26,46,0) 70%);
+  }
+  .hero .body{
+    position:relative;
+    max-width:720px;
+    padding:28px 30px 30px;
+  }
+  .hero h2{
+    margin:0 0 10px;
+    font-size:32px;
+    line-height:1.2;
+    font-weight:700;
+    text-shadow:0 1px 8px rgba(0,0,0,.4);
+  }
+  .hero p{margin:0 0 12px;color:#dbe3f0;font-size:16px;line-height:1.5;}
+  .byline{color:#8394ab;font-size:13px;}
+  .hero .byline{color:#aab7cb;}
+
+  @media (max-width:880px){
+    .hero{min-height:360px;}
+  }
+  @media (max-width:560px){
+    .hero h2{font-size:24px;}
+    .hero .body{padding:22px 20px;}
+  }
+
+  /* ===== Barra lateral y anuncios ===== */
+  .sidebar{grid-column:2;display:flex;flex-direction:column;gap:20px;}
+  @media (max-width:880px){.sidebar{grid-column:1;}}
+
+  .ad-card{
+    background:#fff;border:1px solid #e2e8f0;border-radius:12px;
+    overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);
+  }
+  .ad-card .media{aspect-ratio:16/7;}
+  .ad-card .body{padding:14px 16px 16px;}
+  .ad-label{font-size:11px;letter-spacing:.4px;color:var(--muted);font-weight:700;margin-bottom:8px;}
+  .ad-card h3{margin:0 0 6px;font-size:16px;}
+  .ad-card p{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.5;}
+  .btn{
+    display:inline-block;background:#2c6e4f;color:#fff;font-size:13px;font-weight:700;
+    padding:9px 16px;border-radius:4px;
+  }
+  .btn.dark{background:var(--navy);}
+
+  /* ===== Cuadrícula de noticias ===== */
+  .grid{
+    grid-column:1/-1;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+    margin-top:8px;
+  }
+  @media (max-width:880px){.grid{grid-template-columns:1fr 1fr;}}
+  @media (max-width:560px){.grid{grid-template-columns:1fr;}}
+
+  /* ===== Cuando se oculta el banner hero ===== */
+  main.sin-hero .grid{
+    grid-column:1;
+    grid-row:1;
+    margin-top:0;
+    align-self:start;
+    grid-template-columns:repeat(2,1fr);
+  }
+  main.sin-hero .sidebar{grid-row:1;}
+  @media (max-width:880px){
+    main.sin-hero .grid{grid-row:auto;order:-1;}
+    main.sin-hero .sidebar{grid-row:auto;}
+  }
+  @media (max-width:560px){
+    main.sin-hero .grid{grid-template-columns:1fr;}
+  }
+
+  footer{
+    background:var(--navy);color:#8394ab;text-align:center;
+    padding:26px 20px;font-size:13px;
+  }
+  footer a{color:#c3cede;text-decoration:underline;}
+
+  /* ==========================================
+   CSS NOTICIAS Y COMENTARIOS (noticia.html)
+   ========================================== */
+
+     :root{
+    --navy:#0f1a2e;
+    --navy2:#13213a;
+    --text:#1a2333;
+    --muted:#6b7688;
+    --line:#e7e9ee;
+    --bg:#f5f6f8;
+    --yellow:#f2c14e;
+    --red:#d64545;
+    --blue:#3d7fc7;
+    --green:#3f8f5f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  a{color:inherit;text-decoration:none;}
+  a:focus-visible{outline:3px solid var(--yellow);outline-offset:2px;}
+  img{max-width:100%;}
+
+  /* ---------- Encabezado (igual que la portada) ---------- */
+  header.site{
+    background:var(--navy);
+    color:#fff;
+    padding:22px 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .logo{
+    width:52px;height:52px;border-radius:50%;
+    background:#fff;
+    border:2px solid var(--yellow);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    padding:4px;
+    flex-shrink:0;
+  }
+  .logo img{width:100%;height:100%;object-fit:contain;border-radius:50%;}
+  .brand h1{margin:0;font-size:22px;font-weight:700;}
+  .brand p{margin:2px 0 0;font-size:13px;color:#9fb0c9;}
+  .date{color:#9fb0c9;font-size:14px;white-space:nowrap;}
+  .header-right{display:flex;align-items:center;gap:16px;}
+  .btn-inicio{
+    font-size:13px;color:var(--yellow);padding:6px 12px;
+    border:1px solid rgba(242,193,78,.4);border-radius:4px;font-weight:600;
+  }
+
+  /* ---------- Etiquetas de categoría ---------- */
+  .tag{
+    display:inline-block;font-size:12px;font-weight:800;
+    padding:5px 10px;border-radius:3px;margin-bottom:16px;
+    color:#101010;
+  }
+  .tag.futbol{background:var(--yellow);}
+  .tag.futbol-red{background:var(--red);color:#fff;}
+  .tag.baloncesto{background:var(--blue);color:#fff;}
+  .tag.atletismo{background:var(--green);color:#fff;}
+
+  /* ---------- Artículo ---------- */
+  .noticia-wrap{
+    max-width:760px;margin:0 auto;
+    padding:36px 24px 72px;
+  }
+  .noticia h1{
+    margin:0 0 14px;
+    font-size:clamp(28px,4.6vw,42px);
+    line-height:1.15;
+    font-weight:800;
+    letter-spacing:-.01em;
+    color:var(--navy);
+  }
+  .noticia .subtitulo{
+    margin:0 0 18px;
+    font-size:clamp(17px,2.4vw,21px);
+    line-height:1.45;
+    color:var(--muted);
+  }
+  .noticia .byline{
+    color:var(--muted);font-size:14px;
+    padding-bottom:20px;margin-bottom:26px;
+    border-bottom:1px solid var(--line);
+  }
+  .portada{
+    margin:0 0 30px;
+    aspect-ratio:16/9;
+    border-radius:6px;
+    overflow:hidden;
+    background:#dde1e7;
+  }
+  .portada img{width:100%;height:100%;object-fit:cover;display:block;}
+
+  .contenido{font-size:18px;line-height:1.75;max-width:68ch;}
+  .contenido p{margin:0 0 1.2em;}
+  .contenido h2,.contenido h3{
+    margin:1.6em 0 .6em;line-height:1.25;color:var(--navy);
+  }
+  .contenido img{height:auto;border-radius:4px;}
+  .contenido a{color:var(--blue);text-decoration:underline;}
+  .contenido blockquote{
+    margin:1.5em 0;padding:4px 0 4px 18px;
+    border-left:4px solid var(--yellow);color:var(--muted);
+  }
+
+  /* ---------- Comentarios ---------- */
+  .comentarios{
+    margin-top:52px;padding-top:32px;
+    border-top:1px solid var(--line);
+    max-width:68ch;
+  }
+  .comentarios h2{margin:0 0 20px;font-size:24px;color:var(--navy);}
+  .comentarios h2 span{font-size:16px;font-weight:400;color:var(--muted);margin-left:6px;}
+
+  #form-comentario{
+    position:relative;
+    background:#fff;border:1px solid var(--line);border-radius:6px;
+    padding:20px;margin-bottom:12px;
+  }
+  #form-comentario label{
+    display:block;margin:0 0 6px;
+    font-size:13px;font-weight:700;color:var(--muted);
+  }
+  #form-comentario input[type=text],
+  #form-comentario textarea{
+    width:100%;margin:0 0 16px;padding:10px 12px;
+    font:inherit;font-size:15px;color:var(--text);
+    background:#fff;border:1px solid #cfd5df;border-radius:4px;
+  }
+  #form-comentario textarea{resize:vertical;min-height:96px;line-height:1.5;}
+  #form-comentario input[type=text]:focus-visible,
+  #form-comentario textarea:focus-visible{
+    outline:3px solid rgba(61,127,199,.35);border-color:var(--blue);
+  }
+  .c-pie{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  #c-contador{font-size:13px;color:var(--muted);}
+  #c-enviar{
+    background:var(--navy);color:#fff;border:0;border-radius:4px;
+    font:inherit;font-size:14px;font-weight:700;
+    padding:10px 18px;cursor:pointer;
+  }
+  #c-enviar:hover{background:var(--navy2);}
+  #c-enviar:focus-visible{outline:3px solid var(--yellow);outline-offset:2px;}
+  #c-enviar:disabled{opacity:.6;cursor:wait;}
+  .c-trampa{position:absolute !important;left:-9999px;width:1px;height:1px;opacity:0;}
+  #c-mensaje{min-height:1.4em;margin:12px 0 0;font-size:14px;color:var(--muted);}
+  #c-mensaje.ok{color:var(--green);}
+  #c-mensaje.error{color:var(--red);}
+
+  .comentario{display:flex;gap:14px;padding:20px 0;border-bottom:1px solid var(--line);}
+  .c-avatar{
+    width:40px;height:40px;border-radius:50%;flex-shrink:0;
+    background:var(--navy2);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:16px;
+  }
+  .c-cuerpo{min-width:0;}
+  .c-cabecera{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-bottom:4px;}
+  .c-cabecera strong{font-size:15px;color:var(--navy);}
+  .c-cabecera time{font-size:13px;color:var(--muted);}
+  .c-texto{margin:0;font-size:16px;line-height:1.6;overflow-wrap:anywhere;}
+  .c-vacio{padding:24px 0;color:var(--muted);}
+
+  /* ---------- Estados: cargando / error ---------- */
+  .estado{text-align:center;padding:70px 0;}
+  .estado h1{margin:0 0 10px;font-size:26px;color:var(--navy);}
+  .estado p{margin:0 0 22px;color:var(--muted);}
+  .volver{
+    display:inline-block;background:var(--navy);color:#fff;
+    font-size:14px;font-weight:700;padding:10px 18px;border-radius:4px;
+  }
+
+  /* ---------- Sección de Comentarios ---------- */
+  .comentarios-wrap {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+  }
+  .comentarios-wrap h2 {
+    font-size: 22px;
+    color: var(--navy);
+    margin: 0 0 20px;
+    font-weight: 700;
+  }
+  .comentario-form {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+  .comentario-form textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14.5px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.5;
+    box-sizing: border-box;
+  }
+  .comentario-form textarea:focus {
+    border-color: var(--navy);
+  }
+  .comentario-form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .comentario-contador {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .btn-comentar {
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 8px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn-comentar:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .comentarios-login-prompt {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 18px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  .comentarios-login-prompt a {
+    color: var(--blue);
+    font-weight: 600;
+    text-decoration: underline;
+  }
+  .comentario-item {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+  .comentario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .comentario-autor {
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--navy);
+  }
+  .comentario-fecha {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .comentario-texto {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+  }
+  .comentario-acciones {
+    margin-top: 8px;
+    text-align: right;
+  }
+  .btn-borrar-comentario {
+    background: transparent;
+    border: none;
+    color: var(--red);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 2px 4px;
+  }
+  .sin-comentarios {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 24px;
+    background: #fff;
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+  }
+
+  footer{
+    background:var(--navy);color:#8394ab;text-align:center;
+    padding:26px 20px;font-size:13px;
+  }
+  footer a{color:#c3cede;text-decoration:underline;}
+
+  

@@ -395,3 +395,12 @@
   }
 
 })();
+
+(function () {
+  var fecha = document.getElementById("fecha-hoy");
+  if (fecha) {
+    fecha.textContent = new Intl.DateTimeFormat("es-DO", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric"
+    }).format(new Date());
+  }
+})();
