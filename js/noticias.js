@@ -97,7 +97,7 @@
     );
   }
 
-  var anuncioNoticia = null;
+  var anunciosNoticia = [];
   var pantallaEstrecha = window.matchMedia("(max-width: 980px)");
 
   function colocarAnuncioNoticia() {
@@ -107,13 +107,14 @@
 
     topSlot.textContent = "";
     sidebarSlot.textContent = "";
-    if (!anuncioNoticia) return;
+    if (anunciosNoticia.length === 0) return;
 
-    if (pantallaEstrecha.matches) {
-      topSlot.innerHTML = crearMarkupBannerHorizontal(anuncioNoticia);
-    } else {
-      sidebarSlot.innerHTML = crearMarkupAnuncioLateral(anuncioNoticia);
-    }
+    topSlot.innerHTML = crearMarkupBannerHorizontal(anunciosNoticia[0]);
+    sidebarSlot.innerHTML = anunciosNoticia.slice(1).map(function (anuncio) {
+      return pantallaEstrecha.matches
+        ? crearMarkupBannerHorizontal(anuncio)
+        : crearMarkupAnuncioLateral(anuncio);
+    }).join("");
   }
 
   pantallaEstrecha.addEventListener("change", colocarAnuncioNoticia);
@@ -128,7 +129,13 @@
         .eq("activo", true);
       if (error) throw error;
 
-      anuncioNoticia = barajar(data || [])[0] || null;
+      var vistos = new Set();
+      anunciosNoticia = barajar(data || []).filter(function (anuncio) {
+        var clave = JSON.stringify([anuncio.titulo, anuncio.imagen_url, anuncio.enlace_url]);
+        if (vistos.has(clave)) return false;
+        vistos.add(clave);
+        return true;
+      });
       colocarAnuncioNoticia();
     } catch (e) {
       console.warn("No se pudieron cargar anuncios para la noticia:", e);
