@@ -57,17 +57,17 @@ header {
     padding: 1.125rem 2.5rem;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: Left;
 }
 
 .brand {
     display: flex;
-    align-items: center;
+    align-items: Left;
     gap: 0.875rem;
 }
 
 .brand-mark {
-    background: url('../assets/logo-latinos.png') center / contain no-repeat;
+    background: url('../assets/logo-latinos.png') Left / contain no-repeat;
     width: 54px;
     height: 54px;
     flex-shrink: 0;
