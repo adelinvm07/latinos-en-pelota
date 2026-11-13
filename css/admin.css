@@ -302,6 +302,10 @@ button, input, select, textarea { font-family: inherit; }
   background: var(--accent);
   color: var(--accent-ink);
 }
+.btn-cancelar{
+  background: var(--accent);
+  color: var(--accent-ink);
+}
 
 .btn-primary:hover {
   background: var(--accent-dark);
