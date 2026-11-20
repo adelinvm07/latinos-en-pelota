@@ -462,3 +462,13 @@
 .comentario-respuesta-form[hidden] { display: none; }
 .comentario-respuesta-form .comentario-form-footer { flex-wrap: wrap; gap: 10px; }
 .comentario-header { flex-wrap: wrap; gap: 6px 12px; }
+
+.usuarios-filtros {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.usuarios-filtros .form-label { margin: 0; }
+.usuarios-filtros .input-control { width: 220px; max-width: 100%; }

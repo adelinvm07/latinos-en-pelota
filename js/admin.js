@@ -892,9 +892,23 @@
   }
 
   function filtrarUsuarios(query) {
-    document.querySelectorAll("#usuariosBody tr").forEach(function (fila) {
-      fila.hidden = !fila.cells[0].textContent.toLowerCase().includes(query);
+    var busqueda = document.getElementById("searchInput");
+    var filtro = document.getElementById("filtroRolUsuarios");
+    var rol = filtro ? filtro.value : "todos";
+    var texto = typeof query === "string" ? query : (busqueda ? busqueda.value : "");
+    texto = texto.toLowerCase().trim();
+    var filas = document.querySelectorAll("#usuariosBody tr");
+    var visibles = 0;
+    filas.forEach(function (fila) {
+      var coincideCorreo = fila.cells[0].textContent.toLowerCase().includes(texto);
+      var coincideRol = rol === "todos" || fila.dataset.rol === rol;
+      fila.hidden = !coincideCorreo || !coincideRol;
+      if (!fila.hidden) visibles++;
     });
+    var aviso = document.getElementById("usuariosAviso");
+    if (aviso) aviso.textContent = !filas.length ? "No hay usuarios registrados."
+      : !visibles ? "No hay usuarios que coincidan con los filtros."
+      : "Mostrando " + visibles + " de " + filas.length + " usuarios.";
   }
 
   async function cargarUsuarios() {
@@ -912,6 +926,7 @@
 
       data.forEach(function (usuario) {
         var fila = body.insertRow();
+        fila.dataset.rol = usuario.rol === "owner" ? "owner" : usuario.rol === "admin" ? "admin" : "user";
         fila.insertCell().textContent = usuario.email || usuario.id;
         var rol = fila.insertCell();
         if (usuario.rol === "owner") {
@@ -932,11 +947,7 @@
         fila.insertCell().appendChild(boton);
       });
 
-      var busqueda = document.getElementById("searchInput");
-      if (state.section === "usuarios" && busqueda) {
-        filtrarUsuarios(busqueda.value.toLowerCase().trim());
-      }
-      aviso.textContent = data.length ? "" : "No hay usuarios registrados.";
+      filtrarUsuarios(state.section === "usuarios" ? undefined : "");
     } catch (err) {
       console.error("Error al cargar usuarios:", err);
       aviso.textContent = "No se pudieron cargar los usuarios.";
@@ -1217,6 +1228,11 @@
         state.noticiasPage = 1;
         renderNoticias();
       });
+    }
+
+    var filtroRolUsuarios = document.getElementById("filtroRolUsuarios");
+    if (filtroRolUsuarios) {
+      filtroRolUsuarios.addEventListener("change", function () { filtrarUsuarios(); });
     }
 
     var filtroEst = document.getElementById("filtroEstado");
