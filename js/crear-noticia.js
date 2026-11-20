@@ -479,6 +479,17 @@
     }
 
     try {
+      var yaDestacada = noticiaOriginal && noticiaOriginal.es_destacada && noticiaOriginal.estado === "publicado";
+      if (esDestacada && estado === "publicado" && !yaDestacada) {
+        var consultaDestacadas = window.supabase.from("noticias").select("id")
+          .eq("es_destacada", true).eq("estado", "publicado");
+        if (noticiaId) consultaDestacadas = consultaDestacadas.neq("id", noticiaId);
+        var resultadoDestacadas = await consultaDestacadas.limit(5);
+        if (resultadoDestacadas.error) throw resultadoDestacadas.error;
+        if ((resultadoDestacadas.data || []).length >= 5) {
+          throw new Error("Ya hay cinco noticias destacadas. Desmarca una de ellas para destacar esta noticia.");
+        }
+      }
       var imagenFinalUrl = await obtenerUrlImagenFinal();
 
       var slug = slugText.textContent !== "..." ? slugText.textContent : generarSlug(titulo);
@@ -662,6 +673,8 @@
       }
 
       noticiaOriginal = data;
+      var checkDestacadaEdicion = document.getElementById("es-destacada");
+      if (checkDestacadaEdicion) checkDestacadaEdicion.checked = Boolean(data.es_destacada);
 
       document.title = "Editar Noticia — Latinos en Pelota";
 

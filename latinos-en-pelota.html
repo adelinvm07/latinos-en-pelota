@@ -48,19 +48,19 @@
   </div>
 </nav>
 
-<main>
-
-  <article class="hero" id="hero">
-    <div class="body">
-      <p>Cargando la noticia destacada...</p>
+<main class="portal-main">
+  <section class="destacadas" id="destacadas" aria-label="Noticias destacadas">
+    <div class="destacadas-mosaico" id="destacadas-mosaico" aria-busy="true">
+      <p role="status">Cargando noticias destacadas...</p>
     </div>
-  </article>
+  </section>
 
-  <aside class="sidebar" id="sidebar-anuncios">
-  </aside>
-
-  <div class="grid"></div>
-
+  <div class="portal-inferior">
+    <div class="portal-contenido">
+      <div class="grid"></div>
+    </div>
+    <aside class="sidebar" id="sidebar-anuncios" aria-label="Publicidad"></aside>
+  </div>
 </main>
 
 <footer>

@@ -12,7 +12,8 @@
   var formBusqueda = document.querySelector(".search-box");
   var selectFecha = document.getElementById("filtro-fecha");
   var gridNoticias = document.querySelector(".grid");
-  var heroArticulo = document.querySelector("article.hero");
+  var bloqueDestacadas = document.getElementById("destacadas");
+  var mosaicoDestacadas = document.getElementById("destacadas-mosaico");
 
   var IMAGEN_PLACEHOLDER = "https://commons.wikimedia.org/wiki/Special:FilePath/Etihad%20Stadium.jpg";
 
@@ -137,6 +138,7 @@
 
     } catch (err) {
       console.error("Error cargando noticias desde Supabase:", err);
+      if (bloqueDestacadas) bloqueDestacadas.hidden = true;
       if (gridNoticias) {
         gridNoticias.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--red); padding: 40px 0;">No se pudieron cargar las noticias.</p>';
       }
@@ -188,40 +190,37 @@
 
     var esFiltroAntiguo = ["mes_pasado", "hace_2_meses", "mas_2_meses"].indexOf(filtroFechaActivo) !== -1;
 
-    var destacada = todasLasNoticias.find(function (n) { return n.esDestacada; }) || todasLasNoticias[0];
-    var destacadaEnLista = destacada ? lista.find(function (n) { return n.id === destacada.id; }) : null;
+    var destacadas = lista.filter(function (n) { return n.esDestacada; }).slice(0, 5);
+    if (!destacadas.length && lista.length) destacadas = [lista[0]];
 
-    var mostrarHero = (categoriaActiva === null) &&
-                      (textoBusqueda.length === 0) &&
-                      !esFiltroAntiguo &&
-                      !!destacadaEnLista;
-
+    var mostrarHero = categoriaActiva === null && textoBusqueda.length === 0 &&
+                      !esFiltroAntiguo && destacadas.length > 0;
     var mainEl = document.querySelector("main");
     if (mainEl) mainEl.classList.toggle("sin-hero", !mostrarHero);
+    if (bloqueDestacadas) bloqueDestacadas.hidden = !mostrarHero;
 
-    if (heroArticulo) {
-      if (mostrarHero) {
-        heroArticulo.style.display = "";
-        heroArticulo.innerHTML =
-          '<div class="media">' +
-            '<a href="' + urlNoticia(destacada) + '" style="display:block;height:100%">' +
-              '<img src="' + escapeHtml(destacada.imagen) + '" alt="' + escapeHtml(destacada.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'" style="transition: transform 0.3s ease;">' +
+    if (mosaicoDestacadas) {
+      mosaicoDestacadas.setAttribute("aria-busy", "false");
+      mosaicoDestacadas.dataset.total = String(mostrarHero ? destacadas.length : 0);
+      mosaicoDestacadas.innerHTML = mostrarHero ? destacadas.map(function (n, index) {
+        return (
+          '<article class="destacada-tarjeta' + (index === 0 ? ' destacada-principal' : '') + '">' +
+            '<a class="destacada-enlace" href="' + urlNoticia(n) + '">' +
+              '<img class="destacada-imagen" src="' + escapeHtml(n.imagen) + '" alt="" loading="' + (index === 0 ? 'eager' : 'lazy') + '" decoding="async" onerror="this.onerror=null;this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
+              '<div class="destacada-texto">' +
+                '<span class="tag ' + obtenerClaseTag(n.categoria) + '">' + escapeHtml(n.categoria.toUpperCase()) + '</span>' +
+                '<h3>' + escapeHtml(n.titulo) + '</h3>' +
+                (index === 0 && n.subtitulo ? '<p>' + escapeHtml(n.subtitulo) + '</p>' : '') +
+                '<span class="destacada-fecha">Redacción · ' + escapeHtml(n.fecha) + '</span>' +
+              '</div>' +
             '</a>' +
-          '</div>' +
-          '<div class="body">' +
-            '<span class="tag ' + obtenerClaseTag(destacada.categoria) + '">' + escapeHtml(destacada.categoria.toUpperCase()) + '</span>' +
-            '<h2><a href="' + urlNoticia(destacada) + '">' + escapeHtml(destacada.titulo) + '</a></h2>' +
-            (destacada.subtitulo ? '<p>' + escapeHtml(destacada.subtitulo) + '</p>' : '') +
-            '<div class="byline">Redacción · ' + destacada.fecha + '</div>' +
-          '</div>';
-      } else {
-        heroArticulo.style.display = "none";
-      }
+          '</article>'
+        );
+      }).join("") : "";
     }
 
-    var noticiasGrid = mostrarHero
-      ? lista.filter(function (item) { return item.id !== destacada.id; })
-      : lista;
+    var idsDestacadas = new Set(mostrarHero ? destacadas.map(function (n) { return n.id; }) : []);
+    var noticiasGrid = lista.filter(function (n) { return !idsDestacadas.has(n.id); });
 
     if (noticiasGrid.length === 0) {
       if (mostrarHero) {

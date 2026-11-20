@@ -305,7 +305,7 @@
     try {
       var { data, error } = await window.supabase
         .from("noticias")
-        .select("id, slug, titulo, subtitulo, estado, publicado_en, categoria_id, categorias(id, nombre)")
+        .select("id, slug, titulo, subtitulo, estado, publicado_en, es_destacada, categoria_id, categorias(id, nombre)")
         .order("id", { ascending: false });
 
       if (error) throw error;
@@ -321,6 +321,7 @@
           subtitulo: item.subtitulo || "",
           categoria: catNombre,
           categoria_id: item.categoria_id,
+          esDestacada: Boolean(item.es_destacada),
           estado: item.estado === "publicado" ? "Publicado" : "Borrador",
           fecha: item.publicado_en ? item.publicado_en.split("T")[0] : "",
           slug: item.slug
@@ -623,7 +624,7 @@
 
     if (pageItems.length === 0) {
       body.innerHTML =
-        '<tr><td colspan="6"><div class="empty-state">' +
+        '<tr><td colspan="7"><div class="empty-state">' +
         '<div class="empty-state-icon">📰</div>' +
         '<h3>No se encontraron noticias</h3>' +
         '<p>' + (noticias.length === 0 ? "Aún no hay noticias." : "No hay noticias que coincidan con el filtro actual.") + '</p>' +
@@ -641,6 +642,9 @@
           '</td>' +
           '<td><span class="pill pill--accent">' + escapeHtml(item.categoria) + '</span></td>' +
           '<td><span class="pill ' + pillClass + '">' + escapeHtml(item.estado) + '</span></td>' +
+          '<td>' + (item.esDestacada
+            ? '<span class="admin-destacada" title="' + (isPub ? 'Marcada como destacada' : 'Marcada como destacada; se mostrará al publicarse') + '"><span aria-hidden="true">★</span> Destacada</span>'
+            : '<span class="meta-muted" aria-label="No destacada">—</span>') + '</td>' +
           '<td class="meta-muted">—</td>' +
           '<td class="meta-muted">' + fechaCorta(item.fecha) + '</td>' +
           '<td>' +

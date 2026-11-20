@@ -472,3 +472,124 @@
 }
 .usuarios-filtros .form-label { margin: 0; }
 .usuarios-filtros .input-control { width: 220px; max-width: 100%; }
+
+/* El mosaico ocupa todo el ancho; los anuncios empiezan debajo. */
+main.portal-main {
+  display: block;
+  width: 100%;
+  max-width: 1440px;
+}
+.portal-inferior {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+  margin-top: 28px;
+}
+main.portal-main.sin-hero .portal-inferior { margin-top: 0; }
+.portal-contenido { min-width: 0; }
+main.portal-main .portal-contenido > .grid {
+  margin-top: 0;
+  order: 0;
+}
+main.portal-main .portal-inferior > #sidebar-anuncios {
+  grid-column: auto;
+  grid-row: auto;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-end;
+  gap: 8px;
+}
+@media (min-width: 641px) {
+  .portal-inferior {
+    grid-template-columns: minmax(0, 1fr) clamp(180px, 25vw, 240px);
+    column-gap: clamp(24px, 3vw, 48px);
+  }
+  main.portal-main .portal-inferior > #sidebar-anuncios { grid-column: 2; }
+}
+@media (min-width: 641px) and (max-width: 880px) {
+  main.portal-main.sin-hero .portal-contenido > .grid { grid-template-columns: 1fr; }
+}
+
+/* Cinco destacadas: una principal y cuatro tarjetas secundarias. */
+.destacadas[hidden] { display: none; }
+.destacadas { min-width: 0; }
+.destacadas-mosaico {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.destacada-tarjeta {
+  position: relative;
+  min-width: 0;
+  min-height: 205px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--navy, #0f1a2e);
+  color: #fff;
+  box-shadow: 0 3px 12px rgba(15, 26, 46, 0.1);
+}
+.destacada-principal { grid-column: 1 / -1; min-height: 380px; }
+.destacada-enlace {
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+  height: 100%;
+  min-height: inherit;
+  color: inherit;
+  text-decoration: none;
+}
+.destacada-imagen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.destacada-enlace::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 10%, rgba(15, 26, 46, 0.35) 40%, rgba(15, 26, 46, 0.96));
+  pointer-events: none;
+}
+.destacada-texto { position: relative; z-index: 1; width: 100%; padding: 18px; }
+.destacada-texto .tag { margin-bottom: 10px; font-size: 10px; padding: 4px 7px; }
+.destacada-texto h3 { margin: 0 0 10px; color: #fff; font-size: 18px; line-height: 1.25; overflow-wrap: anywhere; }
+.destacada-principal .destacada-texto { padding: 26px; }
+.destacada-principal h3 { font-size: clamp(24px, 2.3vw, 34px); }
+.destacada-texto p { margin: 0 0 12px; color: #dbe3f0; font-size: 14px; line-height: 1.5; }
+.destacada-fecha { color: #c3cede; font-size: 11px; }
+.destacada-enlace:focus-visible { outline: 3px solid var(--yellow, #f2c14e); outline-offset: -4px; }
+.destacada-enlace:hover h3 { text-decoration: underline; text-underline-offset: 3px; }
+@media (min-width: 1100px) {
+  .destacadas-mosaico[data-total="5"] { grid-template-columns: 2fr 1fr 1fr; }
+  .destacadas-mosaico[data-total="5"] .destacada-principal { grid-column: 1; grid-row: span 2; }
+}
+@media (max-width: 640px) {
+  .destacada-principal { min-height: 320px; }
+  .destacada-principal .destacada-texto { padding: 20px; }
+  .destacada-texto { padding: 14px; }
+  .destacada-texto h3 { font-size: 16px; }
+  .destacada-principal h3 { font-size: 25px; }
+}
+@media (max-width: 420px) {
+  .destacadas-mosaico { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Identificación de destacadas en la tabla administrativa. */
+.admin-destacada {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: #fff4ce;
+  color: #785000;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.admin-destacada > span { color: #a36b00; font-size: 15px; }
+
