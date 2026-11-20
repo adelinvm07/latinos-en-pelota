@@ -61,63 +61,26 @@
     return a;
   }
 
-  function crearMarkupBannerHorizontal(ad) {
-    return (
-      '<div class="ad-top-horizontal">' +
-        '<div class="ad-top-badge">PUBLICIDAD</div>' +
-        '<a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer" class="ad-top-content">' +
-          '<div class="ad-top-thumb">' +
-            '<img src="' + escapeHtml(ad.imagen_url) + '" alt="' + escapeHtml(ad.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
-          '</div>' +
-          '<div class="ad-top-info">' +
-            '<span class="ad-top-title">' + escapeHtml(ad.titulo) + '</span>' +
-          '</div>' +
-          '<span class="ad-top-cta">Ver oferta →</span>' +
-        '</a>' +
-      '</div>'
-    );
-  }
-
   function crearMarkupAnuncioLateral(ad) {
     return (
-      '<div class="ad-card-lateral">' +
-        '<div class="ad-card-lateral-header">' +
-          '<span class="ad-label">PUBLICIDAD</span>' +
+      '<a class="ad-card-lateral" href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer">' +
+        '<span class="ad-label">PUBLICIDAD</span>' +
+        '<img class="ad-card-lateral-imagen" src="' + escapeHtml(ad.imagen_url) + '" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
+        '<div class="ad-card-lateral-texto">' +
+          '<h3>' + escapeHtml(ad.titulo) + '</h3>' +
+          '<span class="btn-ad">Ver oferta ↗</span>' +
         '</div>' +
-        '<div class="ad-card-lateral-media">' +
-          '<a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer">' +
-            '<img src="' + escapeHtml(ad.imagen_url) + '" alt="' + escapeHtml(ad.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
-          '</a>' +
-        '</div>' +
-        '<div class="ad-card-lateral-body">' +
-          '<h4>' + escapeHtml(ad.titulo) + '</h4>' +
-          '<a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer" class="btn-ad">Ver oferta →</a>' +
-        '</div>' +
-      '</div>'
+      '</a>'
     );
   }
 
   var anunciosNoticia = [];
-  var pantallaEstrecha = window.matchMedia("(max-width: 980px)");
 
   function colocarAnuncioNoticia() {
-    var topSlot = document.getElementById("noticia-top-ad");
     var sidebarSlot = document.getElementById("noticia-sidebar-ad");
-    if (!topSlot || !sidebarSlot) return;
-
-    topSlot.textContent = "";
-    sidebarSlot.textContent = "";
-    if (anunciosNoticia.length === 0) return;
-
-    topSlot.innerHTML = crearMarkupBannerHorizontal(anunciosNoticia[0]);
-    sidebarSlot.innerHTML = anunciosNoticia.slice(1).map(function (anuncio) {
-      return pantallaEstrecha.matches
-        ? crearMarkupBannerHorizontal(anuncio)
-        : crearMarkupAnuncioLateral(anuncio);
-    }).join("");
+    if (!sidebarSlot) return;
+    sidebarSlot.innerHTML = anunciosNoticia.map(crearMarkupAnuncioLateral).join("");
   }
-
-  pantallaEstrecha.addEventListener("change", colocarAnuncioNoticia);
 
   async function insertarAnunciosNoticia() {
     if (!window.supabase) return;
@@ -149,7 +112,6 @@
     document.title = n.titulo + " | Latinos en Pelota";
 
     contenedor.innerHTML =
-      '<div id="noticia-top-ad" class="noticia-top-ad-slot"></div>' +
       '<div class="noticia-grid-layout lateral-derecho" id="noticia-layout">' +
         '<div class="noticia-main-col">' +
           '<article class="noticia">' +
@@ -164,7 +126,7 @@
           "</article>" +
           '<div id="contenedor-comentarios-wrap"></div>' +
         '</div>' +
-        '<aside class="noticia-sidebar-ad" id="noticia-sidebar-ad"></aside>' +
+        '<aside class="noticia-sidebar-ad" id="noticia-sidebar-ad" aria-label="Publicidad"></aside>' +
       '</div>';
 
     await inicializarComentarios(n.id);

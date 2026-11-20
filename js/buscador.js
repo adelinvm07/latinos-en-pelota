@@ -330,18 +330,14 @@
 
       asideSidebar.innerHTML = anunciosSinDuplicados.map(function (ad) {
         return (
-          '<div class="ad-card">' +
-            '<div class="media">' +
-              '<a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer">' +
-                '<img src="' + escapeHtml(ad.imagen_url) + '" alt="' + escapeHtml(ad.titulo) + '" onerror="this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
-              '</a>' +
-            '</div>' +
-            '<div class="body">' +
-              '<div class="ad-label">PUBLICIDAD</div>' +
+          '<a class="ad-card-lateral" href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer">' +
+            '<span class="ad-label">PUBLICIDAD</span>' +
+            '<img class="ad-card-lateral-imagen" src="' + escapeHtml(ad.imagen_url) + '" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + IMAGEN_PLACEHOLDER + '\'">' +
+            '<div class="ad-card-lateral-texto">' +
               '<h3>' + escapeHtml(ad.titulo) + '</h3>' +
-              '<a href="' + escapeHtml(ad.enlace_url) + '" target="_blank" rel="noopener noreferrer" class="btn" style="margin-top:10px;">Ver oferta →</a>' +
+              '<span class="btn-ad">Ver oferta ↗</span>' +
             '</div>' +
-          '</div>'
+          '</a>'
         );
       }).join("");
 
